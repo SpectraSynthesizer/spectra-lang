@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<templates>
+	<template autoinsert="true" context="tau.smlab.syntech.Spectra.LTLAsm"
+		deleted="false" description="" enabled="true" name="asm" id="asm">asm ${name}:&#13; ${body};</template>
+	<template autoinsert="true" context="tau.smlab.syntech.Spectra.LTLAsm"
+		deleted="false" description="" enabled="true" name="assumption" id="assumption">assumption ${name}:&#13; ${body};</template>		
+	<template autoinsert="true" context="tau.smlab.syntech.Spectra.VarType"
+		deleted="false" description="" enabled="true" name="boolean" id="boolean">boolean ${name};</template>
+	<template autoinsert="true" context="tau.smlab.syntech.Spectra.Define"
+		deleted="false" description="" enabled="true" name="define" id="define">define ${name} := ${body};</template>
+	<template autoinsert="true" context="tau.smlab.syntech.Spectra.VarType"
+		deleted="false" description="" enabled="true" name="enum" id="enum">{${values}} ${name};</template>
+	<template autoinsert="true" context="tau.smlab.syntech.Spectra.LTLGar"
+		deleted="false" description="" enabled="true" name="gar" id="gar">gar ${name}:&#13; ${body};</template>
+	<template autoinsert="true" context="tau.smlab.syntech.Spectra.LTLGar"
+		deleted="false" description="" enabled="true" name="guarantee" id="guarantee">guarantee ${name}:&#13; ${body};</template>	
+	<template autoinsert="true" context="tau.smlab.syntech.Spectra.VarType"
+		deleted="false" description="" enabled="true" name="Int" id="Int">Int(${from}..${to}) ${name};</template>
+	<template autoinsert="true" context="tau.smlab.syntech.Spectra.Monitor"
+		deleted="false" description="" enabled="true" name="monitor" id="monitor">monitor ${type} ${name}{&#13; ${body};&#13;}</template>
+	<template autoinsert="true" context="tau.smlab.syntech.Spectra.Pattern"
+		deleted="false" description="" enabled="true" name="pattern" id="pattern">pattern ${name} (${args}) {&#13; ${body}&#13;}</template>
+	<template autoinsert="true" context="tau.smlab.syntech.Spectra.Predicate"
+		deleted="false" description="" enabled="true" name="predicate" id="predicate">predicate ${name} (${args}):&#13; ${body};</template>
+	<template autoinsert="true" context="tau.smlab.syntech.Spectra.TypeDef"
+		deleted="false" description="" enabled="true" name="type" id="type">type ${name} = ${body};</template>
+	<template autoinsert="true" context="tau.smlab.syntech.Spectra.WeightDef"
+		deleted="false" description="" enabled="true" name="weight" id="weight">weight ${name}: ${int}&#13;  ${body};</template>
+  <template autoinsert="true" context="tau.smlab.syntech.Spectra.Counter" 
+    deleted="false" description="" enabled="true" id="counter" name="counter">counter ${name} (${lower}..${upper}) {&#13;  inc:${incPred};&#13;}</template>
+</templates>
