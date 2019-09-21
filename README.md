@@ -4,4 +4,4 @@ This repository contains the Eclipse Xtext project for the Spectra language. In 
 - Import the projects into Eclipse
 - Right click on `GenerateSpectra.mwe2` and `Run As -> MWE2 Workflow`.
 
-For further information about the Spectra synthesizer and language, pleae visit spectra-synt repository.
+For further information about the Spectra synthesizer and language, please visit `spectra-synt` repository.
