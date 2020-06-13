@@ -45,11 +45,11 @@ public class TypeSystemTemporlIffExpr {
       }
     }
     
-    TypeCheckIssue issue = TypeSystemUtils.typeCheckCorrectWayOfAccessingArray(temporalIffExpr.getElements().get(0), temporalIffExpr.getElements().get(1), SpectraPackage.Literals.TEMPORAL_IFF_EXPR__OPERATOR);
-    if (issue != null)
-    {
-    	return issue;
-    }
+//    TypeCheckIssue issue = TypeSystemUtils.typeCheckCorrectWayOfAccessingArray(temporalIffExpr.getElements().get(0), temporalIffExpr.getElements().get(1), SpectraPackage.Literals.TEMPORAL_IFF_EXPR__OPERATOR);
+//    if (issue != null)
+//    {
+//    	return issue;
+//    }
   
   return null;
   }

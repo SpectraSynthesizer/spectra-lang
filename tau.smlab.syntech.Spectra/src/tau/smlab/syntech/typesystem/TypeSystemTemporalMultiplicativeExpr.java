@@ -44,11 +44,11 @@ public class TypeSystemTemporalMultiplicativeExpr {
       }
     }
     
-    TypeCheckIssue issue = TypeSystemUtils.typeCheckCorrectWayOfAccessingArray(temporalMultiplicativeExpr.getElements().get(0), temporalMultiplicativeExpr.getElements().get(1), SpectraPackage.Literals.TEMPORAL_MULTIPLICATIVE_EXPR__OPERATOR);
-    if (issue != null)
-    {
-    	return issue;
-    }
+//    TypeCheckIssue issue = TypeSystemUtils.typeCheckCorrectWayOfAccessingArray(temporalMultiplicativeExpr.getElements().get(0), temporalMultiplicativeExpr.getElements().get(1), SpectraPackage.Literals.TEMPORAL_MULTIPLICATIVE_EXPR__OPERATOR);
+//    if (issue != null)
+//    {
+//    	return issue;
+//    }
     
     return null;
   }

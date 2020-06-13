@@ -44,11 +44,11 @@ public class TypeSystemOrExpr {
       }
     }
     
-    TypeCheckIssue issue = TypeSystemUtils.typeCheckCorrectWayOfAccessingArray(temporalOrExpr.getElements().get(0), temporalOrExpr.getElements().get(1), SpectraPackage.Literals.TEMPORAL_OR_EXPR__OPERATOR);
-    if (issue != null)
-    {
-    	return issue;
-    }
+    //TypeCheckIssue issue = TypeSystemUtils.typeCheckCorrectWayOfAccessingArray(temporalOrExpr.getElements().get(0), temporalOrExpr.getElements().get(1), SpectraPackage.Literals.TEMPORAL_OR_EXPR__OPERATOR);
+    //if (issue != null)
+    //{
+    //	return issue;
+    //}
     return null;
   }
 

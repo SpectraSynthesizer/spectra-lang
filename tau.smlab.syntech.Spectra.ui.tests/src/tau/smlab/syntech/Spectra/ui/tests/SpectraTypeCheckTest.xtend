@@ -744,11 +744,11 @@ class SpectraTypeCheckTest {
 			sysvar Sometype2 motor2;
 			gar
 			motor1=motor2;  	
-			'''.parse
+		'''.parse
 		value.assertError(SpectraPackage::eINSTANCE.temporalRelationalExpr, null,
 			IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
 	}
-	
+
 	@Test
 	def void testVarEnumAsTypeVsVarEnum() {
 		val value = '''
@@ -758,11 +758,11 @@ class SpectraTypeCheckTest {
 			sysvar Sometype motor2;
 			gar
 			motor1=motor2;  	
-			'''.parse
+		'''.parse
 		value.assertError(SpectraPackage::eINSTANCE.temporalRelationalExpr, null,
-			IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);		
+			IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
 	}
-	
+
 	@Test
 	def void testVarEnumAsTypeVsVarBoolean() {
 		val value = '''
@@ -772,11 +772,11 @@ class SpectraTypeCheckTest {
 			sysvar Sometype2 motor2;
 			gar
 			motor1=motor2;  	
-			'''.parse
+		'''.parse
 		value.assertError(SpectraPackage::eINSTANCE.temporalRelationalExpr, null,
-			IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);			
+			IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
 	}
-	
+
 	@Test
 	def void testVarEnumAsTypeVsVarBooleanAsType() {
 		val value = '''
@@ -787,46 +787,46 @@ class SpectraTypeCheckTest {
 			sysvar Sometype2 motor2;
 			gar
 			motor1=motor2;  	
-			'''.parse
+		'''.parse
 		value.assertError(SpectraPackage::eINSTANCE.temporalRelationalExpr, null,
-			IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);		
+			IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
 	}
-	
+
 	@Test
 	def void testIntVarComparedToIntArrayLocation() {
 		val value = '''
-		module Moo
-		sysvar Int(3..5) x;
-		sysvar Int(3..5)[3] arr;
-		gar
-		  G (arr[1] = x);
+			module Moo
+			sysvar Int(3..5) x;
+			sysvar Int(3..5)[3] arr;
+			gar
+			  G (arr[1] = x);
 		'''.parse
 		value.assertNoErrors;
 	}
-	
-	@Test 
-	def void testComparisonWithNegativeValue(){
-		val value= '''
-		module Moo
-		gar
-		5 = -5;
+
+	@Test
+	def void testComparisonWithNegativeValue() {
+		val value = '''
+			module Moo
+			gar
+			5 = -5;
 		'''.parse
 		value.assertNoErrors;
 	}
-	
+
 	@Test
 	def void testPredicateEnumParameterPassed() {
 		val value = '''
-		module Moo
-		type Pos = {Left, Right};
-		predicate allItems(Pos p):
-		  TRUE;
-		asm
-		  allItems(Left);
-	     '''.parse
-	     value.assertNoErrors;
+			module Moo
+			type Pos = {Left, Right};
+			predicate allItems(Pos p):
+			  TRUE;
+			asm
+			  allItems(Left);
+		    '''.parse
+		value.assertNoErrors;
 	}
-	
+
 	@Test
 	def void testDefineWithArithmeticExpression() {
 		val value = '''
@@ -837,12 +837,105 @@ class SpectraTypeCheckTest {
 		'''.parse
 		value.assertNoErrors;
 	}
-	
+
 	@Test
 	def void testSubrangeWithArithmeticExpression() {
 		val value = '''
 			module Moo
 			sys Int(0..(3 + 8 * 2)) a;			  
+		'''.parse
+		value.assertNoErrors;
+	}
+
+	@Test
+	def void testQuantifierInPredicate() {
+		val value = '''
+			module Moo
+			define sizeOfIntArray := 7;
+			
+			sys Int(0..3)[sizeOfIntArray] intArray;
+			
+			predicate allGreaterThan (Int(0..3) number):
+				forall i in Int(0..sizeOfIntArray) . intArray[i]>number;
+		'''.parse
+		value.assertNoErrors;
+	}
+
+	@Test
+	def void testNestedQuantifierInPredicate() {
+		val value = '''
+			module Moo
+			define sizeOfIntArray := 7;
+			
+			sys Int(0..3)[sizeOfIntArray] intArray;
+			predicate allGreaterThan (Int(0..3) number):
+				forall i in Int(0..(sizeOfIntArray-1)) . 
+				exists j in Int(0..5) .
+				 intArray[i] = j;
+		'''.parse
+		value.assertNoErrors;
+	}
+	
+	@Test
+	def void testQuantifierInDefine(){
+		val value = '''
+			module Moo
+			define sizeOfBoolArray := 4;
+			
+			sys boolean[sizeOfBoolArray] boolArray;	
+			define atLeastOneTrue := exists i in Int(0..(sizeOfBoolArray-1)) . boolArray[i];
+		'''.parse
+		value.assertNoErrors;
+	}
+	
+	@Test
+	def void testNestedQuantifierInDefine(){
+		val value = '''
+			module Moo
+			define sizeOfBoolArray := 4;
+			
+			sys boolean[sizeOfBoolArray] boolArray;	
+			define atLeastTwoTrue := exists i in Int(0..(sizeOfBoolArray-1)) . 
+						exists j in Int(0..sizeOfBoolArray) . 
+							j < i and boolArray[i] and boolArray[j];
+		'''.parse
+		value.assertNoErrors;
+	}
+
+	
+	@Test
+	def void testParameterizedGar(){
+		val value = '''
+			module Moo
+			
+			sys boolean a;
+			gar b{Int(0..2) i}:
+				(i = 0 or i = 1 or i =2) and a; 
+		'''.parse
+		value.assertNoErrors;
+	}
+	
+		
+	@Test
+	def void testParameterizedAsm(){
+		val value = '''
+			module Moo
+			
+			env boolean a;
+			asm b{Int(0..2) i}:
+				(i = 0 or i = 1 or i =2) and a; 
+		'''.parse
+		value.assertNoErrors;
+	}
+	
+	@Test
+	def void testTwoParameters(){
+		val value = '''
+			module Moo
+			
+			sys boolean a;
+			gar b{Int(0..2) i, boolean c}:
+				i = 0 or c; 
 		'''.parse
 		value.assertNoErrors;
 	}

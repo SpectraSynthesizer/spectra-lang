@@ -41,8 +41,10 @@ import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.resource.Resource;
 
+import tau.smlab.syntech.spectra.DefineRegExpDecl;
 import tau.smlab.syntech.spectra.PredicateOrPatternReferrable;
 import tau.smlab.syntech.spectra.Referrable;
+import tau.smlab.syntech.spectra.RegExp;
 import tau.smlab.syntech.spectra.TemporalExpression;
 import tau.smlab.syntech.spectra.TemporalPrimaryExpr;
 import tau.smlab.syntech.spectra.TypeConstant;
@@ -249,6 +251,30 @@ public class MyTemporalPrimaryExpr implements TemporalPrimaryExpr{
 public EList<TemporalExpression> getIndex() {
 	// TODO Auto-generated method stub
 	return null;
+}
+
+@Override
+public RegExp getRegexp() {
+	// TODO Auto-generated method stub
+	return null;
+}
+
+@Override
+public void setRegexp(RegExp value) {
+	// TODO Auto-generated method stub
+	
+}
+
+@Override
+public DefineRegExpDecl getRegexpPointer() {
+	// TODO Auto-generated method stub
+	return null;
+}
+
+@Override
+public void setRegexpPointer(DefineRegExpDecl value) {
+	// TODO Auto-generated method stub
+	
 }
 
 }

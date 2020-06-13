@@ -28,32 +28,32 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package tau.smlab.syntech.typesystem;
 
+import tau.smlab.syntech.spectra.RegExp;
 import tau.smlab.syntech.spectra.SpectraPackage;
-import tau.smlab.syntech.spectra.TemporalRemainderExpr;
+import tau.smlab.syntech.spectra.UnaryRegExp;
 
-public class TypeSystemTemporalRemainderExpr {
+public class TypeSystemRegExp {
 
-  public static TypeCheckIssue typeCheck(TemporalRemainderExpr temporalRemainderExpr) {
-    BooleanAndString isLeftNumeric = TypeSystemUtils.isNumericExpression(temporalRemainderExpr.getLeft());
-    if (! isLeftNumeric.getBoolean())
-    {
-      return new TypeCheckError(SpectraPackage.Literals.TEMPORAL_REMAINDER_EXPR__OPERATOR, IssueMessages.MOD_EXP_ARGUMENTS_MUST_BE_NUMERIC + ". Left: " + isLeftNumeric.getString());
-    }
-    BooleanAndString isRightNumeric = TypeSystemUtils.isNumericExpression(temporalRemainderExpr.getRight());
-    if (! isRightNumeric.getBoolean())
-    {
-      return new TypeCheckError(SpectraPackage.Literals.TEMPORAL_REMAINDER_EXPR__OPERATOR, IssueMessages.MOD_EXP_ARGUMENTS_MUST_BE_NUMERIC + ". Right: " + isRightNumeric.getString());      
-    }
-    
-//    TypeCheckIssue issue = TypeSystemUtils.typeCheckCorrectWayOfAccessingArray(temporalRemainderExpr.getLeft(), temporalRemainderExpr.getRight(), SpectraPackage.Literals.TEMPORAL_REMAINDER_EXPR__OPERATOR);
-//    if (issue != null)
-//    {
-//    	return issue;
-//    }
-    
-    return null;
-   }
-  
-  }
+	private TypeSystemRegExp() {}
 
+	public static TypeCheckIssue typeCheck(RegExp regExp){
+		if(regExp instanceof UnaryRegExp) {
+			UnaryRegExp unaryRegExp = (UnaryRegExp) regExp;
+			if(unaryRegExp.isHaveRange()) {
+				if(unaryRegExp.getFrom() > unaryRegExp.getTo()) {
+					return new TypeCheckError(SpectraPackage.Literals.UNARY_REG_EXP__HAVE_RANGE, IssueMessages.REGEXP_INVALID_RANGE_QUANTIFIER);
+				}
+			}
+		}
+		/*
+		 * Uncomment to disable regular expressions with nested negation (complement) operators.
+		 */
+//		if(regExp instanceof CompRegExp) {
+//			if(regExp.eContainer() instanceof RegExp) {
+//				return new TypeCheckError(SpectraPackage.Literals.COMP_REG_EXP__COMP, IssueMessages.REGEXP_CANT_HAVE_NESTED_COMP);
+//			}
+//		}
+		return null;
+	}
 
+}

@@ -44,11 +44,11 @@ public class TypeSystemTemporalBinaryExpr {
       }
     }
     
-    TypeCheckIssue issue = TypeSystemUtils.typeCheckCorrectWayOfAccessingArray(temporalBinaryExpr.getElements().get(0), temporalBinaryExpr.getElements().get(1), SpectraPackage.Literals.TEMPORAL_BINARY_EXPR__OPERATOR);
-    if (issue != null)
-    {
-    	return issue;
-    }
+//    TypeCheckIssue issue = TypeSystemUtils.typeCheckCorrectWayOfAccessingArray(temporalBinaryExpr.getElements().get(0), temporalBinaryExpr.getElements().get(1), SpectraPackage.Literals.TEMPORAL_BINARY_EXPR__OPERATOR);
+//    if (issue != null)
+//    {
+//    	return issue;
+//    }
     return null;
   }
 

@@ -40,51 +40,61 @@ import tau.smlab.syntech.spectra.TemporalPrimaryExpr;
 
 public class TypeSystemPredicate {
 
-  public static TypeCheckIssue typeCheck(Predicate predicate) {
-    if (predicate.getBody() instanceof TemporalPrimaryExpr)
-    {
-      TemporalPrimaryExpr temporalPrimaryExpr = (TemporalPrimaryExpr)predicate.getBody();
-      if (temporalPrimaryExpr.getPredPatt() != null)
-      {
-          if (temporalPrimaryExpr.getPredPatt() instanceof Pattern)
-          {
-            return new TypeCheckError(SpectraPackage.Literals.PREDICATE__BODY, IssueMessages.CANT_CALL_A_PATTERN_FROM_HERE);
-          }
-      }
-    }
-    
-	TypeCheckIssue issue = isPredicatesCycle(predicate, new ArrayList<String>());
-	if (issue != null)
-	{
-		return issue;
+	public static TypeCheckIssue typeCheck(Predicate predicate) {
+//		List<Pattern> patternList = null;
+//		if (predicate.getBody() instanceof TemporalPrimaryExpr) {
+//			TemporalPrimaryExpr temporalPrimaryExpr = (TemporalPrimaryExpr)predicate.getBody();
+//				if (temporalPrimaryExpr.getPredPatt() instanceof Pattern) {
+//					patternList = new ArrayList<>();
+//					patternList.add((Pattern)temporalPrimaryExpr.getPredPatt());
+//				}
+//		}
+//		else {
+//			patternList = EcoreUtil2.getAllContentsOfType(predicate.getBody(), Pattern.class);
+//		}
+//		if(patternList != null && !patternList.isEmpty()) {
+//			return new TypeCheckError(SpectraPackage.Literals.PREDICATE__BODY, IssueMessages.CANT_CALL_A_PATTERN_FROM_HERE);
+//		}
+		
+		TypeCheckIssue issue = isPredicatesCycle(predicate, new ArrayList<String>());
+		if (issue != null)
+		{
+			return issue;
+		}
+
+		//We have no cycles thus we can check that the body of the predicate is indeed boolean
+
+		BooleanAndString isPredicateBodyBoolean = TypeSystemUtils.isBooleanExpression(predicate.getBody());
+		if (!isPredicateBodyBoolean.getBoolean()) {
+			return new TypeCheckError(SpectraPackage.Literals.PREDICATE__BODY, IssueMessages.PREDICATES_MUST_BE_BOOLEAN);
+		}
+
+		return null;
 	}
-	
-    return null;
-  }
 
-  private static TypeCheckIssue isPredicatesCycle(Predicate currPredicate, List<String> predicatesNamesSeen) {
-    TypeCheckIssue issue = null;
-    if (predicatesNamesSeen.contains(currPredicate.getName())) {
-      return new TypeCheckError(SpectraPackage.Literals.PREDICATE__BODY, IssueMessages.PREDICATES_CYCLE);
-    }
-    predicatesNamesSeen.add(currPredicate.getName());
+	private static TypeCheckIssue isPredicatesCycle(Predicate currPredicate, List<String> predicatesNamesSeen) {
+		TypeCheckIssue issue = null;
+		if (predicatesNamesSeen.contains(currPredicate.getName())) {
+			return new TypeCheckError(SpectraPackage.Literals.PREDICATE__BODY, IssueMessages.PREDICATES_CYCLE);
+		}
+		predicatesNamesSeen.add(currPredicate.getName());
 
-    List<TemporalPrimaryExpr> temporalPrimaryExprsList = EcoreUtil2.getAllContentsOfType(currPredicate,
-        TemporalPrimaryExpr.class);
-    if (temporalPrimaryExprsList == null) {
-      return null;
-    }
-    for (TemporalPrimaryExpr tpe : temporalPrimaryExprsList) {
-      if (tpe.getPredPatt() != null && tpe.getPredPatt() instanceof Predicate) {
-        Predicate referencedPred = (Predicate) tpe.getPredPatt();
-        List<String> copy = new ArrayList<>();
-        copy.addAll(predicatesNamesSeen);
-        if ((issue = isPredicatesCycle(referencedPred, copy)) != null) {
-          return issue;
-        }
-      }
-    }
+		List<TemporalPrimaryExpr> temporalPrimaryExprsList = EcoreUtil2.getAllContentsOfType(currPredicate,
+				TemporalPrimaryExpr.class);
+		if (temporalPrimaryExprsList == null) {
+			return null;
+		}
+		for (TemporalPrimaryExpr tpe : temporalPrimaryExprsList) {
+			if (tpe.getPredPatt() != null && tpe.getPredPatt() instanceof Predicate) {
+				Predicate referencedPred = (Predicate) tpe.getPredPatt();
+				List<String> copy = new ArrayList<>();
+				copy.addAll(predicatesNamesSeen);
+				if ((issue = isPredicatesCycle(referencedPred, copy)) != null) {
+					return issue;
+				}
+			}
+		}
 
-    return null;
-  }
+		return null;
+	}
 }

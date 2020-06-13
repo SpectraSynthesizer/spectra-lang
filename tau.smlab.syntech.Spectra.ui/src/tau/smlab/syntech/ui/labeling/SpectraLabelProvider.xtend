@@ -45,6 +45,8 @@ import tau.smlab.syntech.spectra.VarDecl
 import tau.smlab.syntech.spectra.VarOwner
 import tau.smlab.syntech.spectra.Monitor
 import tau.smlab.syntech.spectra.Counter
+import tau.smlab.syntech.spectra.DefineRegExp
+import tau.smlab.syntech.spectra.EXGar
 
 /**
  * Provides labels for EObjects.
@@ -117,6 +119,17 @@ class SpectraLabelProvider extends DefaultEObjectLabelProvider {
 
   def text(Counter ele) {
     return "counter " + ele.name;
+  }
+  
+  def text(DefineRegExp ele) {
+    return "regexp " + ele.defineRegsList.get(0).name;
+  }
+  
+   def text(EXGar ele) {
+    if(ele.name === null) {
+    	return "Existential guarantee";
+    }
+    return "Existential guarantee " + ele.name;
   }
 
   def image(Var ele) {

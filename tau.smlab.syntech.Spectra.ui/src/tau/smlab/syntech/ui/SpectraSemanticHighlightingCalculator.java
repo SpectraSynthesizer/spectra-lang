@@ -83,13 +83,16 @@ public class SpectraSemanticHighlightingCalculator implements ISemanticHighlight
 			}
 
 			if (node.getGrammarElement() instanceof CrossReference) {
-				if (ga.getTemporalPrimaryExprAccess().getPointerReferrableCrossReference_2_1_2_0_0() == node.getGrammarElement()) {
+				if (ga.getTemporalPrimaryExprAccess().getPointerReferrableCrossReference_2_1_2_0_0() == node.getGrammarElement()
+						|| ga.getValueInRangeAccess().getConstTypeConstantCrossReference_0_0() == node.getGrammarElement()) {
 					EObject target = helper.resolveElementAt(resource, node.getOffset());
 					if (target instanceof TypeConstant) {
 						acceptor.addPosition(node.getOffset(), node.getLength(),
 								SpectraHighlightingConfiguration.TYPE_CONSTANT_ID);
 					}
 				}
+				
+		
 
 //				if (ga.getPrimaryExprHelperAccess().getPointerReferrableCrossReference_2_0_0() == node.getGrammarElement())
 //				{

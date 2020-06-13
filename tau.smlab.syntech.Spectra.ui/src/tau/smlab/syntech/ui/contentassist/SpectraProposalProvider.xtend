@@ -210,8 +210,8 @@ class SpectraProposalProvider extends AbstractSpectraProposalProvider {
       var tre = currModel as TemporalRelationalExpr
       var tpe = tre.left as TemporalPrimaryExpr
 
-      if (TypeSystemUtils.extractVarDeclFromTemporalPrimaryExpr(tpe) !== null) { // left side of the TemporalRelationalExpr is VarDecl
-        var vd = TypeSystemUtils.extractVarDeclFromTemporalPrimaryExpr(tpe) as VarDecl
+      if (TypeSystemUtils.extractDomainVarDeclFromTemporalPrimaryExpr(tpe) !== null) { // left side of the TemporalRelationalExpr is VarDecl
+        var vd = TypeSystemUtils.extractDomainVarDeclFromTemporalPrimaryExpr(tpe) as VarDecl
         var vd_mtpe = new MyTemporalPrimaryExpr();
         vd_mtpe.pointer = vd
         if (EcoreUtil2.getContainerOfType(vd, Pattern) === null) { // pattern can't see varDecls outside his scope

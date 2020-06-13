@@ -51,6 +51,8 @@ import tau.smlab.syntech.spectra.Predicate
 import tau.smlab.syntech.spectra.Pattern
 import tau.smlab.syntech.spectra.Monitor
 import tau.smlab.syntech.spectra.Counter
+import tau.smlab.syntech.spectra.DefineRegExp
+import tau.smlab.syntech.spectra.EXGar
 
 /**
  * Customization of the default outline structure.
@@ -100,7 +102,15 @@ class SpectraOutlineTreeProvider extends DefaultOutlineTreeProvider {
   def boolean _isLeaf(Monitor ele) {
     return true;
   }
-
+  
+  def boolean _isLeaf(DefineRegExp ele) {
+    return true;
+  }
+  
+  def boolean _isLeaf(EXGar ele) {
+    return true;
+  }
+  
   def boolean _isLeaf(Var ele) {
     return true;
   }

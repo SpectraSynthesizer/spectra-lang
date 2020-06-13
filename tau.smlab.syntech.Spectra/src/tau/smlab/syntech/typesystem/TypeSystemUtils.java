@@ -29,17 +29,22 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package tau.smlab.syntech.typesystem;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EAttribute;
+import org.eclipse.emf.ecore.EReference;
 import org.eclipse.xtext.EcoreUtil2;
 
 import tau.smlab.syntech.spectra.Constant;
 import tau.smlab.syntech.spectra.Counter;
 import tau.smlab.syntech.spectra.DefineDecl;
+import tau.smlab.syntech.spectra.DefineRegExpDecl;
 import tau.smlab.syntech.spectra.DomainVarDecl;
 import tau.smlab.syntech.spectra.Monitor;
 import tau.smlab.syntech.spectra.PatternParam;
@@ -74,6 +79,18 @@ public class TypeSystemUtils {
 	private static final String NOT = "!";
 	private static final String SYS = "SYS";
 	private static final String AUX = "AUX";
+	
+	public static final String NUMERIC_ARRAY_SUM_OF = ".sum";
+	public static final String NUMERIC_ARRAY_PROD_OF = ".prod";
+	public static final String BOOL_ARRAY_AND_OF = ".all";
+	public static final String BOOL_ARRAY_OR_OF = ".any";
+	
+	public static final List<String> NUMERIC_ARRAY_FUNCTIONS = Stream.of(NUMERIC_ARRAY_SUM_OF, NUMERIC_ARRAY_PROD_OF).collect(Collectors.toList());
+	public static final List<String> BOOLEAN_ARRAY_FUNCTIONS = Stream.of(BOOL_ARRAY_AND_OF, BOOL_ARRAY_OR_OF).collect(Collectors.toList());
+	public static final List<String> ARRAY_FUNCTIONS = Stream.of(NUMERIC_ARRAY_FUNCTIONS, BOOLEAN_ARRAY_FUNCTIONS)
+            												.flatMap(x -> x.stream())
+            												.collect(Collectors.toList());
+	
 
 	// @Inject static SpectraGrammarAccess grammarAccess;
 
@@ -126,7 +143,7 @@ public class TypeSystemUtils {
 						alreadySeenDefineDecls = new ArrayList<>();
 					} else if (alreadySeenDefineDecls.contains(defineDecl.getName())) {
 						return null; // to prevent stack overflow. we handle this error somewhere else so just return
-										// "no problem" here.
+						// "no problem" here.
 					}
 					alreadySeenDefineDecls.add(defineDecl.getName());
 					TemporalExpression defineExpression = defineDecl.getSimpleExpr();
@@ -142,8 +159,9 @@ public class TypeSystemUtils {
 					if (!isVarTypeBoolean) {
 						return new BooleanAndString(false, "Non-boolean variable found");
 					}
+				} else if (temporalPrimaryExp.getPointer() instanceof DefineRegExpDecl) {
+					return new BooleanAndString(false, "Reference to a regular expression found");
 				}
-
 			}
 			if (temporalPrimaryExp.getOperator() != null) {
 				if (temporalPrimaryExp.getOperator().equals(MINUS)) {
@@ -239,14 +257,35 @@ public class TypeSystemUtils {
 
 	/**
 	 * 
-	 * @return VarDecl nested in TemporalPrimaryExpr. return null if no VarDecl at
+	 * @return DomainVarDecl nested in TemporalPrimaryExpr. return null if no VarDecl at
 	 *         all
 	 */
-	public static DomainVarDecl extractVarDeclFromTemporalPrimaryExpr(TemporalPrimaryExpr temporalPrimaryExpr) {
+	public static DomainVarDecl extractDomainVarDeclFromTemporalPrimaryExpr(TemporalPrimaryExpr temporalPrimaryExpr) {
 		if (temporalPrimaryExpr.getPointer() != null) {
 			// TODO: fix refactor of xtext!
 			if (temporalPrimaryExpr.getPointer() instanceof DomainVarDecl) {
 				return (DomainVarDecl) temporalPrimaryExpr.getPointer();
+			}
+		}
+		if (temporalPrimaryExpr.getOperator() != null && temporalPrimaryExpr.getOperator().equals(NEXT)) {
+			TemporalExpression temporalExpressionWithinNext = temporalPrimaryExpr.getTemporalExpression();
+			if (temporalExpressionWithinNext instanceof TemporalPrimaryExpr) {
+				return extractDomainVarDeclFromTemporalPrimaryExpr((TemporalPrimaryExpr) temporalExpressionWithinNext);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * 
+	 * @return VarDecl nested in TemporalPrimaryExpr. return null if no VarDecl at
+	 *         all
+	 */
+	public static VarDecl extractVarDeclFromTemporalPrimaryExpr(TemporalPrimaryExpr temporalPrimaryExpr) {
+		if (temporalPrimaryExpr.getPointer() != null) {
+			// TODO: fix refactor of xtext!
+			if (temporalPrimaryExpr.getPointer() instanceof VarDecl) {
+				return (VarDecl) temporalPrimaryExpr.getPointer();
 			}
 		}
 		if (temporalPrimaryExpr.getOperator() != null && temporalPrimaryExpr.getOperator().equals(NEXT)) {
@@ -257,6 +296,7 @@ public class TypeSystemUtils {
 		}
 		return null;
 	}
+
 
 	/**
 	 * 
@@ -376,7 +416,7 @@ public class TypeSystemUtils {
 						alreadySeenDefineDecls = new ArrayList<>();
 					} else if (alreadySeenDefineDecls.contains(defineDecl.getName())) {
 						return null; // to prevent stack overflow. we handle this error somewhere else so just return
-										// "no problem" here.
+						// "no problem" here.
 					}
 					alreadySeenDefineDecls.add(defineDecl.getName());
 					BooleanAndString isDefineExpressionNumeric = isNumericExpression(defineDecl.getSimpleExpr(),
@@ -390,6 +430,8 @@ public class TypeSystemUtils {
 					if (!isVarTypeNumeric(varType)) {
 						return new BooleanAndString(false, "Non-numeric variable found");
 					}
+				} else if (temporalPrimaryExpr.getPointer() instanceof DefineRegExpDecl) {
+					return new BooleanAndString(false, "Reference to a regular expression found");
 				}
 			} else if (temporalPrimaryExpr.getPredPatt() != null) {
 				return new BooleanAndString(false, "Reference to predicate/pattern found");
@@ -541,6 +583,30 @@ public class TypeSystemUtils {
 		return getVarType(typeDef.getType(), seenTypeNames, dimensions, true);
 	}
 
+	public static TypeCheckIssue typeCheckCorrectWayOfAccessingArray(TemporalPrimaryExpr temporalPrimaryExpr,
+			EReference eReference) {
+		if (temporalPrimaryExpr.getPointer() != null
+				&& (temporalPrimaryExpr.getIndex() == null || temporalPrimaryExpr.getIndex().size() == 0)) {
+			if (temporalPrimaryExpr.getPointer() instanceof VarDecl) {
+				VarDecl varDecl = (VarDecl) temporalPrimaryExpr.getPointer();
+				VarType varType = getVarType(varDecl.getType());
+				if (varType.getDimensions() != null && varType.getDimensions().size() > 0 && !ARRAY_FUNCTIONS.contains(temporalPrimaryExpr.getOperator())) {
+					return new TypeCheckError(eReference,
+							IssueMessages.ILLEGAL_ACCESS_TO_ARRAY + " '" + varDecl.getName() + "'");
+				}
+			}
+			else if (temporalPrimaryExpr.getPointer() instanceof TypedParam) {
+				TypedParam typedParam = (TypedParam) temporalPrimaryExpr.getPointer();
+				VarType varType = getVarType(typedParam.getType());
+				if (varType.getDimensions() != null && varType.getDimensions().size() > 0 && !ARRAY_FUNCTIONS.contains(temporalPrimaryExpr.getOperator())) {
+					return new TypeCheckError(eReference, IssueMessages.ILLEGAL_ACCESS_TO_ARRAY + " '"
+							+ typedParam.getName() + "'");
+				}
+			}
+		}
+		return null;
+	}
+
 	private static TypeCheckIssue typeCheckCorrectWayOfAccessingArray(TemporalPrimaryExpr temporalPrimaryExpr,
 			String side, EAttribute eAttribute) {
 		if (temporalPrimaryExpr.getPointer() != null
@@ -548,14 +614,14 @@ public class TypeSystemUtils {
 			if (temporalPrimaryExpr.getPointer() instanceof VarDecl) {
 				VarDecl varDecl = (VarDecl) temporalPrimaryExpr.getPointer();
 				VarType varType = getVarType(varDecl.getType());
-				if (varType.getDimensions() != null && varType.getDimensions().size() > 0) {
+				if (varType.getDimensions() != null && varType.getDimensions().size() > 0 && !ARRAY_FUNCTIONS.contains(temporalPrimaryExpr.getOperator())) {
 					return new TypeCheckError(eAttribute,
 							IssueMessages.ILLEGAL_ACCESS_TO_ARRAY + " '" + varDecl.getName() + "' (" + side + " side)");
 				}
 			} else if (temporalPrimaryExpr.getPointer() instanceof TypedParam) {
 				TypedParam typedParam = (TypedParam) temporalPrimaryExpr.getPointer();
 				VarType varType = getVarType(typedParam.getType());
-				if (varType.getDimensions() != null && varType.getDimensions().size() > 0) {
+				if (varType.getDimensions() != null && varType.getDimensions().size() > 0 && !ARRAY_FUNCTIONS.contains(temporalPrimaryExpr.getOperator())) {
 					return new TypeCheckError(eAttribute, IssueMessages.ILLEGAL_ACCESS_TO_ARRAY + " '"
 							+ typedParam.getName() + "' (" + side + " side)");
 				}
@@ -635,6 +701,40 @@ public class TypeSystemUtils {
 	static class NotArithmeticExpressionException extends Exception {
 		private static final long serialVersionUID = 2L;
 	}
+
+	public static List<List<Integer>> calcArithmeticExpressions(List<TemporalExpression> arithmeticExprList)
+			throws NotArithmeticExpressionException {
+
+		List<List<Integer>> out = new ArrayList<>();
+		for(TemporalExpression arithmeticExpr : arithmeticExprList) {
+			try {
+				out.add(Arrays.asList(calcArithmeticExpression(arithmeticExpr)));
+			} catch (NotArithmeticExpressionException e) {
+				if ((arithmeticExpr instanceof TemporalPrimaryExpr) &&
+						(((TemporalPrimaryExpr)arithmeticExpr).getPointer() instanceof VarDecl)) {
+
+					//we have an index which is a variable reference
+					TemporalPrimaryExpr temporalPrimaryExpr = (TemporalPrimaryExpr) arithmeticExpr;
+					VarDecl varDecl = (VarDecl) temporalPrimaryExpr.getPointer();
+					VarType varType = TypeSystemUtils.getVarType(varDecl.getType());
+
+					//if(!isVarTypeNumeric(varDecl.getType())) {throw e;}
+					if(varType.getSubr() == null) { //Non-Integer typed variable (non-numeric, invalid index)
+						throw e;
+					}
+
+					//add domain interval to the list
+					out.add(Arrays.asList(TypeSystemUtils.sizeDefineToInt(varType.getSubr().getFrom()),
+							TypeSystemUtils.sizeDefineToInt(varType.getSubr().getTo())));
+				}
+				else {
+					throw e;
+				}
+			}
+		}
+		return out;
+	}
+
 
 	// Calculate the int value of an arithmetic expression
 	public static int calcArithmeticExpression(TemporalExpression arithmeticExpr)
@@ -724,5 +824,37 @@ public class TypeSystemUtils {
 			return new CustomizedVarType(varType, updatedDimensions);
 		}
 
+	}
+
+	public static List<String> getPermittedTypeConstants(VarType varType) {
+		return getPermittedTypeConstants(varType, null);
+	}
+
+	private static List<String> getPermittedTypeConstants(VarType varType, List<String> alreadySeenTypeDefs) {
+
+		if (varType.getConst() != null && varType.getConst().size() > 0)
+		{
+			List<String> permittedTypeconstants = new ArrayList<>();
+			for (TypeConstant typeConstant : varType.getConst())
+			{
+				permittedTypeconstants.add(typeConstant.getName());
+			}
+			return permittedTypeconstants;
+		}
+		if (varType.getType() != null)
+		{
+			if (alreadySeenTypeDefs == null)
+			{
+				alreadySeenTypeDefs = new ArrayList<>();
+			}
+			else if(alreadySeenTypeDefs.contains(varType.getType().getName()))
+			{
+				return null; //meaningless, just to prevent stackoverflow
+			}
+			alreadySeenTypeDefs.add(varType.getType().getName());
+			VarType varTypeOfTypeDef = varType.getType().getType();
+			return getPermittedTypeConstants(varTypeOfTypeDef, alreadySeenTypeDefs);
+		}
+		return null;
 	}
 }

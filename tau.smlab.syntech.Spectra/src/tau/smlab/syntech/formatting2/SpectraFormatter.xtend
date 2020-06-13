@@ -208,7 +208,7 @@ class SpectraFormatter extends AbstractFormatter2 {
     //temporalPrimaryExpr.regionFor.keyword(grammarAccess.temporalPrimaryExprAccess.getOperatorNextKeyword_2_1_3_0_0().value).prepend[setNewLines(1, 1, 1)]
     temporalPrimaryExpr.regionFor.keyword(grammarAccess.temporalPrimaryExprAccess.getLeftParenthesisKeyword_2_1_3_1().value).prepend[oneSpace].append[noSpace]//"("
     temporalPrimaryExpr.regionFor.keyword(grammarAccess.temporalPrimaryExprAccess.getRightParenthesisKeyword_2_1_3_3().value).prepend[noSpace].append[oneSpace]//")"
-    temporalPrimaryExpr.regionFor.keyword(grammarAccess.temporalPrimaryExprAccess.getCommaKeyword_2_1_0_3_0().value).prepend[noSpace].append[oneSpace]//","
+    temporalPrimaryExpr.regionFor.keyword(grammarAccess.temporalPrimaryExprAccess.getCommaKeyword_2_1_0_1_0_2_0.value).prepend[noSpace].append[oneSpace]//","
     val open = temporalPrimaryExpr.regionFor.keyword("{")
 	val close = temporalPrimaryExpr.regionFor.keyword("}")
     interior(open, close)[indent]
@@ -305,7 +305,7 @@ class SpectraFormatter extends AbstractFormatter2 {
 		ltlGar.regionFor.keyword(grammarAccess.LTLGarAccess.guaranteeKeyword_0_0.value).prepend[setNewLines(0, 0, 2)].append[oneSpace]	//"guarantee"
 		ltlGar.regionFor.keyword(grammarAccess.LTLGarAccess.garKeyword_0_1.value).prepend[setNewLines(0, 0, 2)].append[oneSpace]	//"gar"
 		
-		ltlGar.regionFor.keyword(grammarAccess.LTLGarAccess.getColonKeyword_1_1().value).prepend[noSpace].append[setNewLines(1, 1, 1)]//':'
+		ltlGar.regionFor.keyword(grammarAccess.LTLGarAccess.getColonKeyword_1_2().value).prepend[noSpace].append[setNewLines(1, 1, 1)]//':'
 	}
 	else{
 		ltlGar.regionFor.keyword(grammarAccess.LTLGarAccess.guaranteeKeyword_0_0.value).prepend[setNewLines(0, 0, 2)].append[setNewLines(1, 1, 1)]
@@ -323,7 +323,7 @@ class SpectraFormatter extends AbstractFormatter2 {
 			ltlAsm.regionFor.keyword(grammarAccess.LTLAsmAccess.assumptionKeyword_0_0.value).prepend[setNewLines(0, 0, 2)].append[oneSpace]//"assumption"
 			ltlAsm.regionFor.keyword(grammarAccess.LTLAsmAccess.asmKeyword_0_1).prepend[setNewLines(0, 0, 2)].append[oneSpace]//"asm"
 			
-			ltlAsm.regionFor.keyword(grammarAccess.LTLAsmAccess.getColonKeyword_1_1().value).prepend[noSpace].append[setNewLines(1, 1, 1)]//':'
+			ltlAsm.regionFor.keyword(grammarAccess.LTLAsmAccess.getColonKeyword_1_2().value).prepend[noSpace].append[setNewLines(1, 1, 1)]//':'
 			
 		} else {
 			ltlAsm.regionFor.keyword(grammarAccess.LTLAsmAccess.assumptionKeyword_0_0.value).prepend[setNewLines(0, 0, 2)].append[setNewLines(1, 1, 1)]//"assumption"

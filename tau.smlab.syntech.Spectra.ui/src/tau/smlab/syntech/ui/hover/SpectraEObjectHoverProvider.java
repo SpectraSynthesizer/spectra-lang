@@ -35,6 +35,7 @@ import org.eclipse.xtext.nodemodel.util.NodeModelUtils;
 import org.eclipse.xtext.ui.editor.hover.html.DefaultEObjectHoverProvider;
 
 import tau.smlab.syntech.spectra.DefineDecl;
+import tau.smlab.syntech.spectra.DefineRegExpDecl;
 import tau.smlab.syntech.spectra.LTLAsm;
 import tau.smlab.syntech.spectra.LTLGar;
 import tau.smlab.syntech.spectra.Model;
@@ -64,8 +65,10 @@ public class SpectraEObjectHoverProvider extends DefaultEObjectHoverProvider {
           {
             return "Justice Guarantee <b>" + garName + "</b>";
           }
-          else
-          {
+          else if(gar.getTrig() != null) {
+        	return "Trigger Guarantee <b>" + garName + "</b>";
+          }
+          else {
             return "INI Guarantee <b>" + garName + "</b>";
           }
       }
@@ -81,8 +84,11 @@ public class SpectraEObjectHoverProvider extends DefaultEObjectHoverProvider {
         {
           return "Justice Assumption <b>" + asmName + "</b>";
         }
-        else
+        else if (asm.getTrig() != null)
         {
+          return "Trigger Assumption <b>" + asmName + "</b>";
+        }
+        else {
           return "INI Assumption <b>" + asmName + "</b>";
         }
       }
@@ -134,6 +140,9 @@ public class SpectraEObjectHoverProvider extends DefaultEObjectHoverProvider {
       if (o instanceof Monitor)
       {
         return "Monitor <b>" + ((Monitor)o).getName() + "</b>";
+      }
+      if (o instanceof DefineRegExpDecl) {
+    	  return "RegExpDecl <b>" + ((DefineRegExpDecl)o).getName() + "</b>";
       }
       return super.getFirstLine(o);
   }

@@ -42,38 +42,51 @@ import tau.smlab.syntech.spectra.VarDecl;
 
 public class TypeSystemLTLGar {
 
-  public static TypeCheckIssue typeCheck(LTLGar gar) {
-    TemporalExpression temporalExpression = (TemporalExpression) gar.getTemporalExpr();
-    if (temporalExpression != null) {
-      List<TemporalPrimaryExpr> temporalPrimaryExprsList;
-      
-      // Need to peel down quantifier layers to see if inner expr has primed vars
-      while(temporalExpression instanceof QuantifierExpr) {
-    	temporalExpression = ((QuantifierExpr)temporalExpression).getTemporalExpr();
-      }
-      
-      if (temporalExpression instanceof TemporalPrimaryExpr) {
-        temporalPrimaryExprsList = new ArrayList<>();
-        temporalPrimaryExprsList.add((TemporalPrimaryExpr) temporalExpression);
-      } else {
-        temporalPrimaryExprsList = EcoreUtil2.getAllContentsOfType(temporalExpression, TemporalPrimaryExpr.class);
-      }
-      List<VarDecl> primedVarDecls = TypeSystemUtils.getPrimedVarDecls(temporalPrimaryExprsList);
+	public static TypeCheckIssue typeCheck(LTLGar gar) {
+		TemporalExpression temporalExpression = (TemporalExpression) gar.getTemporalExpr();
+		if (temporalExpression != null) {
+			List<TemporalPrimaryExpr> temporalPrimaryExprsList;
 
-      if (gar.getSafety() == null && gar.getJustice() == null) {
-        //INI
-        if (primedVarDecls != null && primedVarDecls.size() > 0) {
-          return new TypeCheckError(SpectraPackage.Literals.LTL_GAR__TEMPORAL_EXPR,
-              IssueMessages.GAR_INI_CANT_HAVE_PRIMED_VARS);
-        }
-      } else if (gar.getStateInv() != null) {
-        if (primedVarDecls != null && primedVarDecls.size() > 0) {
-          return new TypeCheckError(SpectraPackage.Literals.LTL_GAR__TEMPORAL_EXPR,
-              IssueMessages.STATEINV_NO_PRIMES);
-        }
-      }
-    }
-    return null;
-  }
+			// Need to peel down quantifier layers to see if inner expr has primed vars
+			while(temporalExpression instanceof QuantifierExpr) {
+				temporalExpression = ((QuantifierExpr)temporalExpression).getTemporalExpr();
+			}
+
+			BooleanAndString boolAndString = TypeSystemUtils.isBooleanExpression(temporalExpression);
+			if(!boolAndString.getBoolean()) {
+				return new TypeCheckError(SpectraPackage.Literals.LTL_GAR__TEMPORAL_EXPR,
+						IssueMessages.GAR_MUST_BE_BOOLEAN);
+			}
+
+			if (temporalExpression instanceof TemporalPrimaryExpr) {
+				temporalPrimaryExprsList = new ArrayList<>();
+				temporalPrimaryExprsList.add((TemporalPrimaryExpr) temporalExpression);
+			} else {
+				temporalPrimaryExprsList = EcoreUtil2.getAllContentsOfType(temporalExpression, TemporalPrimaryExpr.class);
+			}
+			List<VarDecl> primedVarDecls = TypeSystemUtils.getPrimedVarDecls(temporalPrimaryExprsList);
+
+			if(gar.getJustice() != null) {
+				if (primedVarDecls != null && primedVarDecls.size() > 0) {
+					return new TypeCheckError(SpectraPackage.Literals.LTL_GAR__TEMPORAL_EXPR,
+							IssueMessages.GAR_JUSTICE_CANT_HAVE_PRIMED_VARS);
+				}  
+			}
+			else if(gar.getStateInv() != null) { //State invariant (alw)
+				if (primedVarDecls != null && primedVarDecls.size() > 0) {
+					return new TypeCheckError(SpectraPackage.Literals.LTL_GAR__TEMPORAL_EXPR,
+							IssueMessages.STATEINV_NO_PRIMES);
+				}
+			}
+			else if (gar.getSafety() == null) {
+				//INI
+				if (primedVarDecls != null && primedVarDecls.size() > 0) {
+					return new TypeCheckError(SpectraPackage.Literals.LTL_GAR__TEMPORAL_EXPR,
+							IssueMessages.GAR_INI_CANT_HAVE_PRIMED_VARS);
+				}
+			}
+		}
+		return null;
+	}
 
 }

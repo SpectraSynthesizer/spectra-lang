@@ -31,7 +31,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package tau.smlab.syntech.scoping
 
+import com.google.inject.Provider
 import java.util.List
+import javax.inject.Inject
 import org.eclipse.emf.common.util.EList
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EReference
@@ -39,28 +41,28 @@ import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.scoping.IScope
 import org.eclipse.xtext.scoping.Scopes
 import org.eclipse.xtext.util.IResourceScopeCache
+import tau.smlab.syntech.spectra.Counter
 import tau.smlab.syntech.spectra.Decl
 import tau.smlab.syntech.spectra.Define
+import tau.smlab.syntech.spectra.DefineRegExp
+import tau.smlab.syntech.spectra.LTLAsm
+import tau.smlab.syntech.spectra.LTLGar
 import tau.smlab.syntech.spectra.Model
+import tau.smlab.syntech.spectra.Monitor
 import tau.smlab.syntech.spectra.Pattern
 import tau.smlab.syntech.spectra.Predicate
+import tau.smlab.syntech.spectra.QuantifierExpr
 import tau.smlab.syntech.spectra.SpectraPackage
+import tau.smlab.syntech.spectra.TemporalAndExpr
+import tau.smlab.syntech.spectra.TemporalExpression
+import tau.smlab.syntech.spectra.TemporalIffExpr
+import tau.smlab.syntech.spectra.TemporalImpExpr
+import tau.smlab.syntech.spectra.TemporalOrExpr
 import tau.smlab.syntech.spectra.TypeConstant
 import tau.smlab.syntech.spectra.TypeDef
 import tau.smlab.syntech.spectra.Var
 import tau.smlab.syntech.spectra.VarDecl
-import javax.inject.Inject
-import com.google.inject.Provider
-import tau.smlab.syntech.spectra.Monitor
-import tau.smlab.syntech.spectra.Counter
-import tau.smlab.syntech.spectra.LTLGar
-import tau.smlab.syntech.spectra.TemporalExpression
-import tau.smlab.syntech.spectra.QuantifierExpr
-import tau.smlab.syntech.spectra.LTLAsm
-import tau.smlab.syntech.spectra.TemporalImpExpr
-import tau.smlab.syntech.spectra.TemporalIffExpr
-import tau.smlab.syntech.spectra.TemporalOrExpr
-import tau.smlab.syntech.spectra.TemporalAndExpr
+import tau.smlab.syntech.spectra.DefineDecl
 
 /**
  * This class contains custom scoping description.
@@ -75,413 +77,540 @@ class SpectraScopeProvider extends AbstractSpectraScopeProvider {
 	 * select elements in the scope of the <code>reference</code> element
 	 */
 	override def IScope getScope(EObject context, EReference reference) {
-
 		if (reference == SpectraPackage.Literals.TEMPORAL_PRIMARY_EXPR__POINTER) {
 			val contextDecl = EcoreUtil2.getContainerOfType(context, Decl);
 			val root = EcoreUtil2.getContainerOfType(context, Model)
 			val elements = root.elements
 
-			val List<EObject> EObjectsInScope = newArrayList
-
 			if (contextDecl instanceof Predicate) {
 				// temporal expression in the context of a Predicate
-				return cache.get(contextDecl, contextDecl.eResource, new Provider<IScope>() {
-					override get() {
-						val consts = newArrayList()
-						val varDecls = newArrayList()
-						val pred = contextDecl as Predicate
-						for (Decl d : elements) {
-							if (d instanceof TypeDef) {
-								var typedef = d as TypeDef
-								if (typedef.type !== null) {
-									consts.addAll(typedef.type.const)
-									if (typedef.type.type !== null && typedef.type.type.type !== null) {
-										consts.addAll(typedef.type.type.type.const)
-									}
-								}
-							} else if (d instanceof Var) {
-
-								var v = d as Var
-								if (v.^var.type !== null) {
-									consts.addAll(v.^var.type.const)
-									if (v.^var.type.type !== null && v.^var.type.type.type !== null) {
-										consts.addAll(v.^var.type.type.type.const)
-									}
-								}
-								varDecls.add(d.^var);
-							}
-						}
-						if (pred.params !== null) {
-							EObjectsInScope.addAll(pred.params.params)
-						}
-						EObjectsInScope.addAll(consts)
-						EObjectsInScope.addAll(varDecls)
-						return Scopes.scopeFor(EObjectsInScope)
-					}
-				})
-
+				return getScopeForTemporalExpressionInPredicate(context, elements)
 			} else if (contextDecl instanceof Pattern) {
 				// temporal expression in the context of a Pattern
-				return cache.get(contextDecl, contextDecl.eResource, new Provider<IScope>() {
-					override get() {
-						val patt = contextDecl as Pattern
-						val consts = newArrayList()
-
-						for (Decl d : elements) {
-							if (d instanceof TypeDef) {
-								var typedef = d as TypeDef
-								if (typedef.type !== null) {
-									if (typedef.type.type !== null && typedef.type.type.type !== null) {
-										consts.addAll(typedef.type.type.type.const);
-									}
-									consts.addAll(typedef.type.const);
-								}
-							} else if (d instanceof Counter) {
-								EObjectsInScope.add(d)
-							}
-						}
-						val varDeclList = patt.varDeclList as EList<VarDecl>
-						for (VarDecl d : varDeclList) {
-							if (d.type !== null) {
-								consts.addAll(d.type.const)
-							}
-						}
-						EObjectsInScope.addAll(consts)
-						EObjectsInScope.addAll(patt.varDeclList)
-						if (patt.params !== null) {
-							EObjectsInScope.addAll(patt.params.params)
-						}
-						return Scopes.scopeFor(EObjectsInScope)
-					}
-				})
-
+				return getScopeForTemporalExpressionInPattern(context, elements)
 			} else if (contextDecl instanceof LTLGar) {
 				// temporal expression in the context of a LTLGar
-				return cache.get(contextDecl, contextDecl.eResource, new Provider<IScope>() {
-					override get() {
-						val ltlGar = contextDecl as LTLGar
-
-						val List<Pattern> PattList = newArrayList()
-						val List<Predicate> PredList = newArrayList()
-
-						if (ltlGar.^temporalExpr !== null) {
-							
-							var tmpExpr = ltlGar.^temporalExpr as TemporalExpression
-							addDomainVars(EObjectsInScope, tmpExpr)
-
-//							while (tmpExpr !== null && tmpExpr instanceof QuantifierExpr) {
-//								var qe = tmpExpr as QuantifierExpr;
-//								if (qe.domainVar !== null) {
-//									// first add the domain vars to the scope
-//									EObjectsInScope.add(qe.domainVar);
-//								}
-//								tmpExpr = qe.temporalExpr as TemporalExpression;
-//							}
-
-						}
-
-						for (Decl d : elements) {
-							if (d instanceof TypeDef) {
-								var typedef = d as TypeDef
-								if (typedef.type !== null && typedef.type.const !== null) {
-									EObjectsInScope.addAll(typedef.type.const)
-								}
-							} else if (d instanceof Var) {
-								var v = d as Var
-								if (v.^var !== null) {
-									if (v.^var.type !== null) {
-										EObjectsInScope.addAll(v.^var.type.const)
-									}
-									EObjectsInScope.add(d.^var);
-								}
-							} else if (d instanceof Define) {
-								EObjectsInScope.addAll(d.defineList)
-							} else if (d instanceof Monitor) {
-								EObjectsInScope.add(d)
-							} else if (d instanceof Pattern) {
-								PattList.add(d as Pattern)
-							} else if (d instanceof Predicate) {
-								PredList.add(d as Predicate)
-							} else if (d instanceof Counter) {
-								EObjectsInScope.add(d)
-							}
-						}
-
-						EObjectsInScope.addAll(PattList)
-
-						for (Pattern p : PattList) {
-							val consts = newArrayList()
-							val varDeclList = p.varDeclList as EList<VarDecl>
-							for (VarDecl vd : varDeclList) {
-								consts.addAll(vd.type.const)
-							}
-							EObjectsInScope.removeAll(consts)
-							EObjectsInScope.removeAll(p.varDeclList)
-							if (p.params !== null) {
-								EObjectsInScope.removeAll(p.params.params)
-							}
-						}
-						EObjectsInScope.addAll(PredList)
-
-						for (Predicate p : PredList) {
-							if (p.params !== null) {
-								EObjectsInScope.removeAll(p.params.params)
-							}
-							EObjectsInScope.removeAll(EcoreUtil2.getAllContentsOfType(p, TypeConstant))
-						}
-
-						return Scopes.scopeFor(EObjectsInScope)
-					}
-				})
+				return getScopeForTemporalExpressionInLTLGar(context, elements)
 			} else if (contextDecl instanceof LTLAsm) {
 				// temporal expression in the context of a LTLAsm
-				return cache.get(contextDecl, contextDecl.eResource, new Provider<IScope>() {
-					override get() {
-						val ltlAsm = contextDecl as LTLAsm
-
-						val List<Pattern> PattList = newArrayList()
-						val List<Predicate> PredList = newArrayList()
-
-						if (ltlAsm.^temporalExpr !== null) {
-
-							var tmpExpr = ltlAsm.^temporalExpr as TemporalExpression
-							addDomainVars(EObjectsInScope, tmpExpr)
-
-//							while (tmpExpr !== null && tmpExpr instanceof QuantifierExpr) {
-//								var qe = tmpExpr as QuantifierExpr;
-//								if (qe.domainVar !== null) {
-//									// first add the domain vars to the scope
-//									EObjectsInScope.add(qe.domainVar);
-//								}
-//								tmpExpr = qe.temporalExpr as TemporalExpression;
-//							}
-
-						}
-
-						for (Decl d : elements) {
-							if (d instanceof TypeDef) {
-								var typedef = d as TypeDef
-								if (typedef.type !== null && typedef.type.const !== null) {
-									EObjectsInScope.addAll(typedef.type.const)
-								}
-							} else if (d instanceof Var) {
-								var v = d as Var
-								if (v.^var !== null) {
-									if (v.^var.type !== null) {
-										EObjectsInScope.addAll(v.^var.type.const)
-									}
-									EObjectsInScope.add(d.^var);
-								}
-							} else if (d instanceof Define) {
-								EObjectsInScope.addAll(d.defineList)
-							} else if (d instanceof Monitor) {
-								EObjectsInScope.add(d)
-							} else if (d instanceof Pattern) {
-								PattList.add(d as Pattern)
-							} else if (d instanceof Predicate) {
-								PredList.add(d as Predicate)
-							} else if (d instanceof Counter) {
-								EObjectsInScope.add(d)
-							}
-						}
-
-						EObjectsInScope.addAll(PattList)
-
-						for (Pattern p : PattList) {
-							val consts = newArrayList()
-							val varDeclList = p.varDeclList as EList<VarDecl>
-							for (VarDecl vd : varDeclList) {
-								consts.addAll(vd.type.const)
-							}
-							EObjectsInScope.removeAll(consts)
-							EObjectsInScope.removeAll(p.varDeclList)
-							if (p.params !== null) {
-								EObjectsInScope.removeAll(p.params.params)
-							}
-						}
-						EObjectsInScope.addAll(PredList)
-
-						for (Predicate p : PredList) {
-							if (p.params !== null) {
-								EObjectsInScope.removeAll(p.params.params)
-							}
-							EObjectsInScope.removeAll(EcoreUtil2.getAllContentsOfType(p, TypeConstant))
-						}
-
-						return Scopes.scopeFor(EObjectsInScope)
-					}
-				})
+				return getScopeForTemporalExpressionInLTLAsm(context, elements)
+			} else if (contextDecl instanceof Define) {
+				// temporal expression in the context of a Define
+				return getScopeForTemporalExpressionInDefine(context, elements)
 			} else {
 				// temporal expression in all other contexts
-				return cache.get(root, root.eResource, new Provider<IScope>() {
-					override get() {
-
-						val List<Pattern> PattList = newArrayList()
-						val List<Predicate> PredList = newArrayList()
-						for (Decl d : elements) {
-							if (d instanceof TypeDef) {
-								var typedef = d as TypeDef
-								if (typedef.type !== null && typedef.type.const !== null) {
-									EObjectsInScope.addAll(typedef.type.const)
-								}
-							} else if (d instanceof Var) {
-								var v = d as Var
-								if (v.^var !== null) {
-									if (v.^var.type !== null) {
-										EObjectsInScope.addAll(v.^var.type.const)
-									}
-									EObjectsInScope.add(d.^var);
-								}
-							} else if (d instanceof Define) {
-								EObjectsInScope.addAll(d.defineList)
-							} else if (d instanceof Monitor) {
-								EObjectsInScope.add(d)
-							} else if (d instanceof Counter) {
-								EObjectsInScope.add(d)
-							} else if (d instanceof Pattern) {
-								PattList.add(d as Pattern)
-							} else if (d instanceof Predicate) {
-								PredList.add(d as Predicate)
-							}
-						}
-
-						EObjectsInScope.addAll(PattList)
-
-						for (Pattern p : PattList) {
-							val consts = newArrayList()
-							val varDeclList = p.varDeclList as EList<VarDecl>
-							for (VarDecl vd : varDeclList) {
-								consts.addAll(vd.type.const)
-							}
-							EObjectsInScope.removeAll(consts)
-							EObjectsInScope.removeAll(p.varDeclList)
-							if (p.params !== null) {
-								EObjectsInScope.removeAll(p.params.params)
-							}
-						}
-						EObjectsInScope.addAll(PredList)
-
-						for (Predicate p : PredList) {
-							if (p.params !== null) {
-								EObjectsInScope.removeAll(p.params.params)
-							}
-							EObjectsInScope.removeAll(EcoreUtil2.getAllContentsOfType(p, TypeConstant))
-						}
-						return Scopes.scopeFor(EObjectsInScope)
-					}
-				})
+				return getScopeForTemporalExpressionInOtherContext(context, elements)
 			}
-		} // scope for variable as index to array
-		else if (reference == SpectraPackage.Literals.TEMPORAL_PRIMARY_EXPR__INDEX) {
+		} else if (reference == SpectraPackage.Literals.TEMPORAL_PRIMARY_EXPR__INDEX) {
+			// scope for variable as index to array
 			val contextDecl = EcoreUtil2.getContainerOfType(context, Decl);
 			val root = EcoreUtil2.getContainerOfType(context, Model)
 			val elements = root.elements
 
-			val List<EObject> EObjectsInScope = newArrayList
-
 			if (contextDecl instanceof Predicate) {
 				// Index in the context of a Predicate
-				return cache.get(contextDecl, contextDecl.eResource, new Provider<IScope>() {
-					override get() {
-						val varDecls = newArrayList()
-						val pred = contextDecl as Predicate
-						for (Decl d : elements) {
-							if (d instanceof Var) {
-								varDecls.add(d.^var);
-							}
-						}
-
-						if (pred.params !== null) {
-							EObjectsInScope.addAll(pred.params.params)
-						}
-
-						EObjectsInScope.addAll(varDecls)
-						return Scopes.scopeFor(EObjectsInScope)
-					}
-				})
-
+				return getScopeForIndexInPredicate(context, elements)
 			} else if (contextDecl instanceof LTLGar) {
 				// Index in the context of a LTLGar
-				return cache.get(contextDecl, contextDecl.eResource, new Provider<IScope>() {
-					override get() {
-						val ltlGar = contextDecl as LTLGar
-
-						if (ltlGar.^temporalExpr !== null) {
-							if (ltlGar.^temporalExpr instanceof QuantifierExpr) {
-
-								var qe = ltlGar.^temporalExpr as QuantifierExpr;
-								if (qe.domainVar !== null) {
-									EObjectsInScope.add(qe.domainVar);
-
-								}
-							}
-						}
-
-						for (Decl d : elements) {
-
-							if (d instanceof Var) {
-								var v = d as Var
-								if (v.^var !== null) {
-									EObjectsInScope.add(d.^var);
-								}
-							}
-						}
-						return Scopes.scopeFor(EObjectsInScope)
-					}
-				})
+				return getScopeForIndexInLTLGar(context, elements)
 			} else if (contextDecl instanceof LTLAsm) {
 				// Index in the context of a LTLAsm
-				return cache.get(contextDecl, contextDecl.eResource, new Provider<IScope>() {
-					override get() {
-						val ltlAsm = contextDecl as LTLAsm
-
-						if (ltlAsm.^temporalExpr !== null) // NEED TO CHECK THAT FIRST FOR PRIORITY
-						{
-							if (ltlAsm.^temporalExpr instanceof QuantifierExpr) {
-								var qe = ltlAsm.^temporalExpr as QuantifierExpr;
-								if (qe.domainVar !== null) {
-									EObjectsInScope.add(qe.domainVar);
-
-								}
-							}
-						}
-
-						for (Decl d : elements) {
-							if (d instanceof Var) {
-								var v = d as Var
-								if (v.^var !== null) {
-									EObjectsInScope.add(d.^var);
-								}
-							}
-						}
-						return Scopes.scopeFor(EObjectsInScope)
-					}
-				})
-
+				return getScopeForIndexInLTLAsm(context, elements)
 			} else {
 				// temporal expression in all other contexts
-				return cache.get(root, root.eResource, new Provider<IScope>() {
-					override get() {
-
-						for (Decl d : elements) {
-
-							if (d instanceof Var) {
-								var v = d as Var
-								if (v.^var !== null) {
-									EObjectsInScope.add(d.^var);
-								}
-							}
-
-						}
-						return Scopes.scopeFor(EObjectsInScope)
-					}
-				})
+				return getScopeForIndexInOtherContext(context, elements)
 			}
 		}
 
 		return super.getScope(context, reference);
 	}
-	
+
+	def IScope getScopeForTemporalExpressionInPredicate(EObject context, EList<Decl> elements) {
+		val contextDecl = EcoreUtil2.getContainerOfType(context, Decl);
+		val List<EObject> EObjectsInScope = newArrayList
+
+		return cache.get(contextDecl, contextDecl.eResource, new Provider<IScope>() {
+			override get() {
+				val consts = newArrayList()
+				val varDecls = newArrayList()
+				val pred = contextDecl as Predicate
+				for (Decl d : elements) {
+					if (d instanceof TypeDef) {
+						var typedef = d as TypeDef
+						if (typedef.type !== null) {
+							consts.addAll(typedef.type.const)
+							if (typedef.type.type !== null && typedef.type.type.type !== null) {
+								consts.addAll(typedef.type.type.type.const)
+							}
+						}
+					} else if (d instanceof Var) {
+						var v = d as Var
+						if (v.^var.type !== null) {
+							consts.addAll(v.^var.type.const)
+							if (v.^var.type.type !== null && v.^var.type.type.type !== null) {
+								consts.addAll(v.^var.type.type.type.const)
+							}
+						}
+						varDecls.add(d.^var);
+					} else if (d instanceof Define) {
+						var define = d as Define
+						EObjectsInScope.addAll(define.^defineList)
+					}
+				}
+				if (pred.params !== null) {
+					EObjectsInScope.addAll(pred.params.params)
+				}
+				if (pred.body instanceof TemporalExpression) {
+					var tmpExpr = pred.^body as TemporalExpression
+					addDomainVars(EObjectsInScope, tmpExpr)
+				}
+				EObjectsInScope.addAll(consts)
+				EObjectsInScope.addAll(varDecls)
+				return Scopes.scopeFor(EObjectsInScope)
+			}
+		})
+	}
+
+	def IScope getScopeForTemporalExpressionInPattern(EObject context, EList<Decl> elements) {
+		val contextDecl = EcoreUtil2.getContainerOfType(context, Decl);
+		val List<EObject> EObjectsInScope = newArrayList
+
+		return cache.get(contextDecl, contextDecl.eResource, new Provider<IScope>() {
+			override get() {
+				val patt = contextDecl as Pattern
+				val consts = newArrayList()
+
+				for (Decl d : elements) {
+					if (d instanceof TypeDef) {
+						var typedef = d as TypeDef
+						if (typedef.type !== null) {
+							if (typedef.type.type !== null && typedef.type.type.type !== null) {
+								consts.addAll(typedef.type.type.type.const);
+							}
+							consts.addAll(typedef.type.const);
+						}
+					} else if (d instanceof Counter) {
+						EObjectsInScope.add(d)
+					}
+				}
+				val varDeclList = patt.varDeclList as EList<VarDecl>
+				for (VarDecl d : varDeclList) {
+					if (d.type !== null) {
+						consts.addAll(d.type.const)
+					}
+				}
+				EObjectsInScope.addAll(consts)
+				EObjectsInScope.addAll(patt.varDeclList)
+				if (patt.params !== null) {
+					EObjectsInScope.addAll(patt.params.params)
+				}
+				return Scopes.scopeFor(EObjectsInScope)
+			}
+		})
+	}
+
+	def IScope getScopeForTemporalExpressionInLTLGar(EObject context, EList<Decl> elements) {
+		val contextDecl = EcoreUtil2.getContainerOfType(context, Decl);
+		val List<EObject> EObjectsInScope = newArrayList
+
+		return cache.get(contextDecl, contextDecl.eResource, new Provider<IScope>() {
+			override get() {
+				val ltlGar = contextDecl as LTLGar
+
+				val List<Pattern> PattList = newArrayList()
+				val List<Predicate> PredList = newArrayList()
+
+				if (ltlGar.^temporalExpr !== null) {
+					var tmpExpr = ltlGar.^temporalExpr as TemporalExpression
+					addDomainVars(EObjectsInScope, tmpExpr)
+				}
+				
+				if(ltlGar.params !== null){
+					EObjectsInScope.addAll(ltlGar.params.params);
+				}
+
+				for (Decl d : elements) {
+					if (d instanceof TypeDef) {
+						var typedef = d as TypeDef
+						if (typedef.type !== null && typedef.type.const !== null) {
+							EObjectsInScope.addAll(typedef.type.const)
+						}
+					} else if (d instanceof Var) {
+						var v = d as Var
+						if (v.^var !== null) {
+							if (v.^var.type !== null) {
+								EObjectsInScope.addAll(v.^var.type.const)
+							}
+							EObjectsInScope.add(d.^var);
+						}
+					} else if (d instanceof Define) {
+						EObjectsInScope.addAll(d.defineList)
+					} else if (d instanceof Monitor) {
+						EObjectsInScope.add(d)
+					} else if (d instanceof Pattern) {
+						PattList.add(d as Pattern)
+					} else if (d instanceof Predicate) {
+						PredList.add(d as Predicate)
+					} else if (d instanceof Counter) {
+						EObjectsInScope.add(d)
+					} else if (d instanceof DefineRegExp) {
+						EObjectsInScope.addAll(d.defineRegsList);
+					}
+				}
+
+				EObjectsInScope.addAll(PattList)
+
+				for (Pattern p : PattList) {
+					val consts = newArrayList()
+					val varDeclList = p.varDeclList as EList<VarDecl>
+					for (VarDecl vd : varDeclList) {
+						consts.addAll(vd.type.const)
+					}
+					EObjectsInScope.removeAll(consts)
+					EObjectsInScope.removeAll(p.varDeclList)
+					if (p.params !== null) {
+						EObjectsInScope.removeAll(p.params.params)
+					}
+				}
+				EObjectsInScope.addAll(PredList)
+
+				for (Predicate p : PredList) {
+					if (p.params !== null) {
+						EObjectsInScope.removeAll(p.params.params)
+					}
+					EObjectsInScope.removeAll(EcoreUtil2.getAllContentsOfType(p, TypeConstant))
+				}
+
+				return Scopes.scopeFor(EObjectsInScope)
+			}
+		})
+	}
+
+	def IScope getScopeForTemporalExpressionInLTLAsm(EObject context, EList<Decl> elements) {
+		val contextDecl = EcoreUtil2.getContainerOfType(context, Decl);
+		val List<EObject> EObjectsInScope = newArrayList
+
+		return cache.get(contextDecl, contextDecl.eResource, new Provider<IScope>() {
+			override get() {
+				val ltlAsm = contextDecl as LTLAsm
+
+				val List<Pattern> PattList = newArrayList()
+				val List<Predicate> PredList = newArrayList()
+
+				if (ltlAsm.^temporalExpr !== null) {
+					var tmpExpr = ltlAsm.^temporalExpr as TemporalExpression
+					addDomainVars(EObjectsInScope, tmpExpr)
+				}
+				
+				if(ltlAsm.params !== null){
+					EObjectsInScope.addAll(ltlAsm.params.params);
+				}
+
+				for (Decl d : elements) {
+					if (d instanceof TypeDef) {
+						var typedef = d as TypeDef
+						if (typedef.type !== null && typedef.type.const !== null) {
+							EObjectsInScope.addAll(typedef.type.const)
+						}
+					} else if (d instanceof Var) {
+						var v = d as Var
+						if (v.^var !== null) {
+							if (v.^var.type !== null) {
+								EObjectsInScope.addAll(v.^var.type.const)
+							}
+							EObjectsInScope.add(d.^var);
+						}
+					} else if (d instanceof Define) {
+						EObjectsInScope.addAll(d.defineList)
+					} else if (d instanceof Monitor) {
+						EObjectsInScope.add(d)
+					} else if (d instanceof Pattern) {
+						PattList.add(d as Pattern)
+					} else if (d instanceof Predicate) {
+						PredList.add(d as Predicate)
+					} else if (d instanceof Counter) {
+						EObjectsInScope.add(d)
+					} else if (d instanceof DefineRegExp) {
+						EObjectsInScope.addAll(d.defineRegsList);
+					}
+				}
+
+				EObjectsInScope.addAll(PattList)
+
+				for (Pattern p : PattList) {
+					val consts = newArrayList()
+					val varDeclList = p.varDeclList as EList<VarDecl>
+					for (VarDecl vd : varDeclList) {
+						consts.addAll(vd.type.const)
+					}
+					EObjectsInScope.removeAll(consts)
+					EObjectsInScope.removeAll(p.varDeclList)
+					if (p.params !== null) {
+						EObjectsInScope.removeAll(p.params.params)
+					}
+				}
+				EObjectsInScope.addAll(PredList)
+
+				for (Predicate p : PredList) {
+					if (p.params !== null) {
+						EObjectsInScope.removeAll(p.params.params)
+					}
+					EObjectsInScope.removeAll(EcoreUtil2.getAllContentsOfType(p, TypeConstant))
+				}
+
+				return Scopes.scopeFor(EObjectsInScope)
+			}
+		})
+	}
+
+	def IScope getScopeForTemporalExpressionInDefine(EObject context, EList<Decl> elements) {
+		val contextDecl = EcoreUtil2.getContainerOfType(context, Decl);
+		val List<EObject> EObjectsInScope = newArrayList
+
+		return cache.get(contextDecl, contextDecl.eResource, new Provider<IScope>() {
+			override get() {
+				
+				val define = contextDecl as Define
+
+				val List<Pattern> PattList = newArrayList()
+				val List<Predicate> PredList = newArrayList()
+				for (Decl d : elements) {
+					if (d instanceof TypeDef) {
+						var typedef = d as TypeDef
+						if (typedef.type !== null && typedef.type.const !== null) {
+							EObjectsInScope.addAll(typedef.type.const)
+						}
+					} else if (d instanceof Var) {
+						var v = d as Var
+						if (v.^var !== null) {
+							if (v.^var.type !== null) {
+								EObjectsInScope.addAll(v.^var.type.const)
+							}
+							EObjectsInScope.add(d.^var);
+						}
+					} else if (d instanceof Define) {
+						EObjectsInScope.addAll(d.defineList)
+					} else if (d instanceof Monitor) {
+						EObjectsInScope.add(d)
+					} else if (d instanceof Counter) {
+						EObjectsInScope.add(d)
+					} else if (d instanceof Pattern) {
+						PattList.add(d as Pattern)
+					} else if (d instanceof Predicate) {
+						PredList.add(d as Predicate)
+					} else if (d instanceof DefineRegExp) {
+						EObjectsInScope.addAll(d.defineRegsList);
+					}
+				}
+
+				EObjectsInScope.addAll(PattList)
+				
+				for (DefineDecl decl : define.^defineList){
+					var tmpExpr = decl.^simpleExpr as TemporalExpression
+					addDomainVars(EObjectsInScope, tmpExpr)
+				}
+
+				for (Pattern p : PattList) {
+					val consts = newArrayList()
+					val varDeclList = p.varDeclList as EList<VarDecl>
+					for (VarDecl vd : varDeclList) {
+						consts.addAll(vd.type.const)
+					}
+					EObjectsInScope.removeAll(consts)
+					EObjectsInScope.removeAll(p.varDeclList)
+					if (p.params !== null) {
+						EObjectsInScope.removeAll(p.params.params)
+					}
+				}
+				EObjectsInScope.addAll(PredList)
+
+				for (Predicate p : PredList) {
+					if (p.params !== null) {
+						EObjectsInScope.removeAll(p.params.params)
+					}
+					EObjectsInScope.removeAll(EcoreUtil2.getAllContentsOfType(p, TypeConstant))
+				}
+				return Scopes.scopeFor(EObjectsInScope)
+			}
+		})
+	}
+
+	def IScope getScopeForTemporalExpressionInOtherContext(EObject context, EList<Decl> elements) {
+		val root = EcoreUtil2.getContainerOfType(context, Model)
+		val List<EObject> EObjectsInScope = newArrayList
+
+		return cache.get(root, root.eResource, new Provider<IScope>() {
+			override get() {
+
+				val List<Pattern> PattList = newArrayList()
+				val List<Predicate> PredList = newArrayList()
+				for (Decl d : elements) {
+					if (d instanceof TypeDef) {
+						var typedef = d as TypeDef
+						if (typedef.type !== null && typedef.type.const !== null) {
+							EObjectsInScope.addAll(typedef.type.const)
+						}
+					} else if (d instanceof Var) {
+						var v = d as Var
+						if (v.^var !== null) {
+							if (v.^var.type !== null) {
+								EObjectsInScope.addAll(v.^var.type.const)
+							}
+							EObjectsInScope.add(d.^var);
+						}
+					} else if (d instanceof Define) {
+						EObjectsInScope.addAll(d.defineList)
+					} else if (d instanceof Monitor) {
+						EObjectsInScope.add(d)
+					} else if (d instanceof Counter) {
+						EObjectsInScope.add(d)
+					} else if (d instanceof Pattern) {
+						PattList.add(d as Pattern)
+					} else if (d instanceof Predicate) {
+						PredList.add(d as Predicate)
+					} else if (d instanceof DefineRegExp) {
+						EObjectsInScope.addAll(d.defineRegsList);
+					}
+				}
+
+				EObjectsInScope.addAll(PattList)
+
+				for (Pattern p : PattList) {
+					val consts = newArrayList()
+					val varDeclList = p.varDeclList as EList<VarDecl>
+					for (VarDecl vd : varDeclList) {
+						consts.addAll(vd.type.const)
+					}
+					EObjectsInScope.removeAll(consts)
+					EObjectsInScope.removeAll(p.varDeclList)
+					if (p.params !== null) {
+						EObjectsInScope.removeAll(p.params.params)
+					}
+				}
+				EObjectsInScope.addAll(PredList)
+
+				for (Predicate p : PredList) {
+					if (p.params !== null) {
+						EObjectsInScope.removeAll(p.params.params)
+					}
+					EObjectsInScope.removeAll(EcoreUtil2.getAllContentsOfType(p, TypeConstant))
+				}
+				return Scopes.scopeFor(EObjectsInScope)
+			}
+		})
+	}
+
+	def IScope getScopeForIndexInPredicate(EObject context, EList<Decl> elements) {
+		val contextDecl = EcoreUtil2.getContainerOfType(context, Decl);
+		val List<EObject> EObjectsInScope = newArrayList
+
+		return cache.get(contextDecl, contextDecl.eResource, new Provider<IScope>() {
+			override get() {
+				val varDecls = newArrayList()
+				val pred = contextDecl as Predicate
+				for (Decl d : elements) {
+					if (d instanceof Var) {
+						varDecls.add(d.^var);
+					}
+				}
+
+				if (pred.params !== null) {
+					EObjectsInScope.addAll(pred.params.params)
+				}
+
+				EObjectsInScope.addAll(varDecls)
+				return Scopes.scopeFor(EObjectsInScope)
+			}
+		})
+	}
+
+	def IScope getScopeForIndexInLTLGar(EObject context, EList<Decl> elements) {
+		val contextDecl = EcoreUtil2.getContainerOfType(context, Decl);
+		val List<EObject> EObjectsInScope = newArrayList
+
+		return cache.get(contextDecl, contextDecl.eResource, new Provider<IScope>() {
+			override get() {
+				val ltlGar = contextDecl as LTLGar
+
+				if (ltlGar.^temporalExpr !== null) {
+					if (ltlGar.^temporalExpr instanceof QuantifierExpr) {
+
+						var qe = ltlGar.^temporalExpr as QuantifierExpr;
+						if (qe.domainVar !== null) {
+							EObjectsInScope.add(qe.domainVar);
+
+						}
+					}
+				}
+
+				for (Decl d : elements) {
+
+					if (d instanceof Var) {
+						var v = d as Var
+						if (v.^var !== null) {
+							EObjectsInScope.add(d.^var);
+						}
+					}
+				}
+				return Scopes.scopeFor(EObjectsInScope)
+			}
+		})
+	}
+
+	def IScope getScopeForIndexInLTLAsm(EObject context, EList<Decl> elements) {
+		val contextDecl = EcoreUtil2.getContainerOfType(context, Decl);
+		val List<EObject> EObjectsInScope = newArrayList
+
+		return cache.get(contextDecl, contextDecl.eResource, new Provider<IScope>() {
+			override get() {
+				val ltlAsm = contextDecl as LTLAsm
+
+				if (ltlAsm.^temporalExpr !== null) // NEED TO CHECK THAT FIRST FOR PRIORITY
+				{
+					if (ltlAsm.^temporalExpr instanceof QuantifierExpr) {
+						var qe = ltlAsm.^temporalExpr as QuantifierExpr;
+						if (qe.domainVar !== null) {
+							EObjectsInScope.add(qe.domainVar);
+
+						}
+					}
+				}
+
+				for (Decl d : elements) {
+					if (d instanceof Var) {
+						var v = d as Var
+						if (v.^var !== null) {
+							EObjectsInScope.add(d.^var);
+						}
+					}
+				}
+				return Scopes.scopeFor(EObjectsInScope)
+			}
+		})
+	}
+
+	def IScope getScopeForIndexInOtherContext(EObject context, EList<Decl> elements) {
+		val root = EcoreUtil2.getContainerOfType(context, Model)
+		val List<EObject> EObjectsInScope = newArrayList
+
+		return cache.get(root, root.eResource, new Provider<IScope>() {
+			override get() {
+
+				for (Decl d : elements) {
+
+					if (d instanceof Var) {
+						var v = d as Var
+						if (v.^var !== null) {
+							EObjectsInScope.add(d.^var);
+						}
+					}
+
+				}
+				return Scopes.scopeFor(EObjectsInScope)
+			}
+		})
+	}
+
 	def void addDomainVars(List<EObject> EObjectsInScope, TemporalExpression tempExp) {
 		if (tempExp instanceof TemporalImpExpr) {
 			var imp = tempExp as TemporalImpExpr;

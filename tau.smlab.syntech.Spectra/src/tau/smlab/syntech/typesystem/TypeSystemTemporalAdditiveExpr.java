@@ -44,11 +44,11 @@ public class TypeSystemTemporalAdditiveExpr {
       }
     }
     
-    TypeCheckIssue issue = TypeSystemUtils.typeCheckCorrectWayOfAccessingArray(temporalAdditiveExpr.getElements().get(0), temporalAdditiveExpr.getElements().get(1), SpectraPackage.Literals.TEMPORAL_ADDITIVE_EXPR__OPERATOR);
-    if (issue != null)
-    {
-    	return issue;
-    }
+//    TypeCheckIssue issue = TypeSystemUtils.typeCheckCorrectWayOfAccessingArray(temporalAdditiveExpr.getElements().get(0), temporalAdditiveExpr.getElements().get(1), SpectraPackage.Literals.TEMPORAL_ADDITIVE_EXPR__OPERATOR);
+//    if (issue != null)
+//    {
+//    	return issue;
+//    }
     
     return null;
   }

@@ -47,11 +47,11 @@ public class TypeSystemImplExpr {
       return new TypeCheckError(SpectraPackage.Literals.TEMPORAL_IMP_EXPR__OPERATOR, IssueMessages.IMPLIES_EXPR_ARGUMENTS_MUST_BE_BOOLEANS + ". Right: " + isImplicationBoolean.getString());
     }
     
-    TypeCheckIssue issue = TypeSystemUtils.typeCheckCorrectWayOfAccessingArray(temporalImplExpr.getLeft(), temporalImplExpr.getImplication(), SpectraPackage.Literals.TEMPORAL_IMP_EXPR__OPERATOR);
-    if (issue != null)
-    {
-    	return issue;
-    }
+//    TypeCheckIssue issue = TypeSystemUtils.typeCheckCorrectWayOfAccessingArray(temporalImplExpr.getLeft(), temporalImplExpr.getImplication(), SpectraPackage.Literals.TEMPORAL_IMP_EXPR__OPERATOR);
+//    if (issue != null)
+//    {
+//    	return issue;
+//    }
     return null;
   }
 

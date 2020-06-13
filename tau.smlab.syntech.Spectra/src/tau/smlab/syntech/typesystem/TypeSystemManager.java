@@ -30,6 +30,7 @@ package tau.smlab.syntech.typesystem;
 
 import org.eclipse.emf.ecore.EObject;
 
+import tau.smlab.syntech.spectra.BooleanTerm;
 import tau.smlab.syntech.spectra.DefineDecl;
 import tau.smlab.syntech.spectra.EXGar;
 import tau.smlab.syntech.spectra.Import;
@@ -38,6 +39,7 @@ import tau.smlab.syntech.spectra.LTLGar;
 import tau.smlab.syntech.spectra.Pattern;
 import tau.smlab.syntech.spectra.Predicate;
 import tau.smlab.syntech.spectra.QuantifierExpr;
+import tau.smlab.syntech.spectra.RegExp;
 import tau.smlab.syntech.spectra.Subrange;
 import tau.smlab.syntech.spectra.TemporalAdditiveExpr;
 import tau.smlab.syntech.spectra.TemporalAndExpr;
@@ -134,6 +136,12 @@ public class TypeSystemManager {
     else if (eobject instanceof EXGar)
     {
     	return TypeSystemEXGar.typeCheck((EXGar)eobject);
+    }
+    else if (eobject instanceof RegExp) {
+    	return TypeSystemRegExp.typeCheck((RegExp)eobject);
+    }
+    else if(eobject instanceof BooleanTerm) {
+    	return TypeSystemBooleanTerm.typeCheck((BooleanTerm)eobject);
     }
     else if (eobject instanceof LTLAsm)
     {

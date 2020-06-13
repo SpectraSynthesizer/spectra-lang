@@ -46,7 +46,8 @@ public class TypeSystemEXGar {
 		BooleanAndString booleanAndStr;
 		List<TemporalPrimaryExpr> temporalPrimaryExprsList;
 		List<VarDecl> primedVarDecls;
-		for(TemporalExpression temporalExpression :  exGar.getElements()) {
+		
+		for(TemporalExpression temporalExpression : exGar.getElements()) {
 			booleanAndStr = TypeSystemUtils.isBooleanExpression(temporalExpression, null);
 			if(!booleanAndStr.getBoolean()) {
 				return new TypeCheckError(SpectraPackage.Literals.EX_GAR__ELEMENTS,

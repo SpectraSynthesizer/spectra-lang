@@ -52,6 +52,10 @@ public class SpectraAntlrTokenToAttributeIdMapper extends DefaultAntlrTokenToAtt
 		{
 			return SpectraHighlightingConfiguration.WEIGHT_ID;
 		}
+		if ("'regexp'".equals(tokenName))
+		{
+			return SpectraHighlightingConfiguration.REGEXP_ID;
+		}
 		return super.calculateId(tokenName, tokenType);
 		
 		

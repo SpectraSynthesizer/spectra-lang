@@ -45,6 +45,7 @@ public interface IssueMessages {
   public final String MULTIPLICATIVE_EXP_ARGUMENTS_MUST_BE_NUMERIC = "Arguments of MULTIPLICATIVE expression must be numeric";
   public final String DIMENSIONS_DONT_MATCH = "Number of dimensions doesn't match";
   public final String INDEX_OUT_OF_BOUNDS = "Index out of bounds";
+  public final String INVALID_INDEX_EXP = "Invalid index expression";
   public final String NUM_ARGS_DOESNT_MATCH =  "Number of arguments doesn't match signature";
   public final String PATTERN_PARAMS_ARE_BOOLEAN = "Pattern should get boolean parameters";
   public final String PATTERN_MUST_BE_ALONE = "Pattern can only appear as an assumption or as a gurantee by itself";
@@ -80,6 +81,7 @@ public interface IssueMessages {
   public final String CANT_PRIME_MORE_THAN_ONCE = "Double priming (using nested 'next's) is not allowed";
   public final String ILLEGAL_ACCESS_TO_ARRAY = "Illegal acces to an array";
   public final String PREDICATES_CYCLE = "Predicate contains a cycle";
+  public final String PREDICATES_MUST_BE_BOOLEAN = "Predicate is non-boolean";
   public final String NOT_A_SPECTRA_FILE = "This is not a .spectra file";
   public final String SPECTRA_FILE_NOT_FOUND = "No such .spectra file";
   public final String DOMAIN_TYPE_IS_NOT_ARRAY = "Domain type must be scalar";
@@ -87,4 +89,19 @@ public interface IssueMessages {
   public final String PATTERN_CANT_BE_IN_QUANTIFIER_EXPR ="Pattern can't be called in quantifier expression";
   public final String EXISTENTIAL_GAR_MUST_CAN_ONLY_HAVE_BOOLEAN = "Existential guarantees can only have boolean expressions";
   public final String EXISTENTIAL_GAR_CANT_HAVE_PRIMED_VARS = "Existential guarantees can't have primed ('next') variables";
+  public final String REGEXP_PREDICATES_MUST_BE_BOOLEAN = "Regular expressions can only have boolean predicate expressions";
+  public final String REGEXP_IN_SET_PREDICATES_CANT_HAVE_ARRAYS = "Regular expressions can only have 'in value set' predicates that reference non-array variables";
+  public final String REGEXP_VAL_NOT_IN_VAR_DOM = "The value set can only contain values in the domain of the referenced variable";
+  public final String REGEXP_INVALID_VAL_RANGE = "An empty range of integer values";
+  public final String REGEXP_VAL_AT_MOST_ONCE = "The same value can appear at most once in the value set";
+  public final String REGEXP_VAL_SET_EQUALS_DOM = "Too much values in the value set";
+  public final String REGEXP_CANT_HAVE_PASTLTL_EXPR = "Regular expressions can't have PastLTL expressions";
+  public final String REGEXP_CANT_HAVE_PRIMED_VARS = "Regular expressions can't have primed ('next') variables";
+  public final String REGEXP_CANT_HAVE_NESTED_COMP = "Regular expressions can't have nested complementation (negation) operators";
+  public final String REGEXP_INVALID_RANGE_QUANTIFIER = "Repetitions in range quantifier with an invalid range";
+  public final String GAR_MUST_BE_BOOLEAN = "GAR must be boolean";
+  public final String ASM_MUST_BE_BOOLEAN = "ASM must be boolean";
+  public final String FUNCTION_CANT_APPLY_ON_TYPE_ARRAY = "This function can't apply on this array type";
+  public final String FUNCTION_CANT_APPLY_ON_BOOLEAN_ARRAY = "This function can't apply on boolean arrays";
+  public final String FUNCTION_APPLY_ONLY_ON_ARRAY = "This function can apply only on arrays";
 }

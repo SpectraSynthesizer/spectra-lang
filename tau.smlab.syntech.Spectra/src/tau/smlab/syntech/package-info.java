@@ -35,6 +35,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * @Author Yoni Wolbe
  * @Author Gal Amram
  * @Author Ilia Shevrin
+ * @Author Keren Solodkin
+ * @Author Shiri Haim
  * @Author Niv Konstantini
  * @Author Itai Friedman
  * @Author Tal Gerbi

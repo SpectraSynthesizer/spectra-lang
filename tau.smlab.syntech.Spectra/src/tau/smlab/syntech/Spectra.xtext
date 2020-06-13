@@ -80,7 +80,7 @@ Define:
 	'define' (defineList+=DefineDecl)+;
 
 DefineDecl:
-	name=ID ':=' simpleExpr=TemporalImpExpr TOK_SEMI;
+	name=ID ':=' simpleExpr=TemporalExpression TOK_SEMI;
 	
 DefineRegExp:
   'regexp' (defineRegsList+=DefineRegExpDecl)+;
@@ -129,9 +129,9 @@ Pattern:
 	) TOK_SEMI)+ '}');
 
 Predicate:
-  'predicate' name=ID ('(' params=TypedParamList ')')?
-  ( (':' body=TemporalImpExpr TOK_SEMI) | 
-    ('{' body=TemporalImpExpr '}')
+  'predicate' name=ID ('(' params=TypedParamList ')' | '()')
+  ( (':' body=TemporalExpression TOK_SEMI) | 
+    ('{' body=TemporalExpression '}')
   );
   
 VarType:
@@ -142,17 +142,18 @@ VarType:
 	('[' dimensions+=SizeDefineDecl ']')*;
 
 LTLGar:
-	('guarantee' | 'gar') (name=ID ':')?
+	('guarantee' | 'gar') (name=ID ('{' params=TypedParamList '}')? ':')?
 	((('ini' | 'initially' | safety=('G' | 'trans') | stateInv=('always' | 'alw') | justice=('GF' | 'alwEv'| 'alwaysEventually'))? (temporalExpr=QuantifierExpr)) | (trig=Trigger)) TOK_SEMI;
+	
 
 LTLAsm:
-	('assumption' | 'asm') (name=ID ':')?
+	('assumption' | 'asm') (name=ID ('{'  params=TypedParamList '}')? ':')?
   ((('ini' | 'initially' | safety=('G' | 'trans') | stateInv=('always' | 'alw') | justice=('GF' | 'alwEv'| 'alwaysEventually'))? (temporalExpr=QuantifierExpr)) | (trig=Trigger)) TOK_SEMI;
 
 
-EXGar:
+EXGar:	
   ('guarantee' | 'gar') (name=ID ':')?
-  'GE' elements+=TemporalImpExpr (',' elements+=TemporalImpExpr)* TOK_SEMI;
+  (('GE' elements+=TemporalImpExpr (',' elements+=TemporalImpExpr)*) | ('GEF' regExpPointer = [DefineRegExpDecl]) | ('GEF' regExp = RegExp)) TOK_SEMI;
 
 TemporalExpression:
   QuantifierExpr;
@@ -171,7 +172,7 @@ TemporalAndExpr returns TemporalExpression:
 
 TemporalRelationalExpr returns TemporalExpression:
 	TemporalRemainderExpr	({TemporalRelationalExpr.left=current} operator=('='|'!='|'<'|'>'|'<='|'>=') right=TemporalRemainderExpr)?;
- 
+	
 TemporalRemainderExpr returns TemporalExpression:
 	TemporalAdditiveExpr ({TemporalRemainderExpr.left=current} operator=('mod' | '%') right=TemporalAdditiveExpr)?;
 
@@ -195,12 +196,17 @@ TemporalPrimaryExpr returns TemporalExpression:
 	Constant
 	| '(' QuantifierExpr ')'
 	| {TemporalPrimaryExpr}
-	 (predPatt=[PredicateOrPatternReferrable] '(' predPattParams+=TemporalImpExpr (',' predPattParams+=TemporalImpExpr)* ')'
+	 (predPatt=[PredicateOrPatternReferrable] ('(' predPattParams+=TemporalImpExpr (',' predPattParams+=TemporalImpExpr)* ')' | '()')
 	 | operator=('-'|'!') tpe=TemporalPrimaryExpr
 	 | pointer=[Referrable]('[' index+=TemporalImpExpr ']')* 
-	 | operator='next' '(' temporalExpression=TemporalImpExpr ')');
+	 | operator='next' '(' temporalExpression=TemporalImpExpr ')'
+	 | operator='regexp' '(' (regexp=RegExp | regexpPointer=[DefineRegExpDecl]) ')'
+	 | pointer=[Referrable] operator='.all'
+	 | pointer=[Referrable] operator='.any'
+	 | pointer=[Referrable] operator='.prod'
+	 | pointer=[Referrable] operator='.sum');
 	// |Trigger;
-
+	
 PredicateOrPatternReferrable:
   Pattern | Predicate;
   
@@ -217,8 +223,8 @@ Constant returns TemporalExpression:
   	| integerValue=INT);
 
   
-  Trigger:
-{Trigger} 'trig' '(' initPointer=[DefineRegExpDecl]','effectPointer=[DefineRegExpDecl] ')';
+Trigger:
+{Trigger} 'trig'  (initPointer=[DefineRegExpDecl] | initRegExp=RegExp ) '|=>' (effectPointer=[DefineRegExpDecl] | effectRegExp=RegExp);
   
 
 RegExp:
@@ -228,29 +234,46 @@ RegExp:
  	UnaryRegExp ({BinaryRegExp.left=current} (op=('&' | '|'))? right=UnaryRegExp)*;
  
  UnaryRegExp returns RegExp:
- 	left = PrimaryRegExp  ( 
-		(kleened?='*')| 
+ 	CompRegExp ({UnaryRegExp.left=current}
+		((kleened?='*')| 
  		(questionMark?='?')| 
  		(plus?='+')|
         (haveExactRepetition?='{' exactRepetition=INT '}')| 
         (haveAtLeast?='{' atLeast=INT ',' '}')| 
-        (haveRange?='{' from=INT ',' to=INT '}'))?;
+        (haveRange?='{' from=INT ',' to=INT '}')))?;
  
- PrimaryRegExp returns RegExp:
- 	(comp?='~')? left = AtomicRegExp;
+ CompRegExp returns RegExp:
+ 	PrimaryRegExp | ({CompRegExp} (comp='~') left=CompRegExp);
 
-AtomicRegExp returns RegExp:
-	'(' RegExp ')' | (neg?='!')?  var=[VarDecl] |val= ('T' |'F') | rangedvar=RangedVar  | empty?= '()';
+PrimaryRegExp returns RegExp:
+	'(' RegExp ')' | val=('TRUE' |'FALSE' | 'true' | 'false') | assrt=BooleanTerm  | empty?='()'; //| (neg?='!')? pointer=[VarDecl]
 
-RangedVar:
-	var=[VarDecl] '=' '{' (int=INT | from=INT multi?='-' to=INT) ( another=AnotherValue )? '}';
+BooleanTerm:
+	{BooleanTerm} '[' (((pointer=[VarDecl] (not?='not')? 'in' '{'  values+=ValueInRange (',' values+=ValueInRange)* '}')) |  relExpr=TemporalImpExpr) ']';
 
-AnotherValue:
-	"," (int=INT | from=INT multi?='-' to=INT) (right=AnotherValue)?;
-                          
-                          
-                          
+ValueInRange:
+	 const=[TypeConstant] | int=INT | (from=INT multi?='-' to=INT) | booleanValue=('TRUE' |'FALSE' | 'true' | 'false');
+	
+// UnaryRegExp returns RegExp:
+// 	left = PrimaryRegExp  ( 
+//		(kleened?='*')| 
+// 		(questionMark?='?')| 
+// 		(plus?='+')|
+//        (haveExactRepetition?='{' exactRepetition=INT '}')| 
+//        (haveAtLeast?='{' atLeast=INT ',' '}')| 
+//        (haveRange?='{' from=INT ',' to=INT '}'))?;
 
+// PrimaryRegExp returns RegExp:
+// 	(comp?='~')? left = AtomicRegExp;
+
+
+//AtomicRegExp returns RegExp:
+//	'(' RegExp ')' | (neg?='!')? var=[VarDecl]  (((neq='!=') | '=') (const=[TypeConstant] | int=INT))? | val=('TRUE' |'FALSE' | 'true' | 'false') | rangedVar=RangedVar  | empty?= '()';
+   
+        
+//RangedVar:
+//	var=[VarDecl] ((neq='!=') | '=') '[' (values+=ValueInRange)+ ']';
+                    
 //quantifier expression - a temporal logic expression with quantifiers.
 QuantifierExpr returns TemporalExpression:
   TemporalImpExpr

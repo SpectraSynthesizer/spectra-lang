@@ -50,6 +50,7 @@ import tau.smlab.syntech.spectra.WeightDef
 import tau.smlab.syntech.spectra.Counter
 import tau.smlab.syntech.spectra.QuantifierExpr
 import tau.smlab.syntech.spectra.EXGar
+import tau.smlab.syntech.spectra.DefineRegExp
 
 /**
  * This class contains custom validation rules. 
@@ -83,7 +84,18 @@ class SpectraValidator extends AbstractSpectraValidator {
 				seenNames.add(e.name)
 			}
 		}
-
+		
+		for (defineRegExp : m.elements.filter(typeof(DefineRegExp))) {
+			for(regExpDecl : defineRegExp.defineRegsList) {
+				if(regExpDecl.name !== null) {
+					if (seenNames.contains(regExpDecl.name)) {
+						error("Regular expressions' names have to be unique", regExpDecl, SpectraPackage.Literals.DEFINE_REG_EXP_DECL.EIDAttribute);
+					}
+					seenNames.add(regExpDecl.name);
+				}
+			}
+		}
+	
 		for (define : m.elements.filter(typeof(Define))) {
 			for (defineDecl : define.defineList) {
 				if (defineDecl.name !== null) {

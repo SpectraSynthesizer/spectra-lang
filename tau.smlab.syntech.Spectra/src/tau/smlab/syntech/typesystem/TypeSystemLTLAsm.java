@@ -42,50 +42,61 @@ import tau.smlab.syntech.spectra.VarDecl;
 
 public class TypeSystemLTLAsm {
 
-  public static TypeCheckIssue typeCheck(LTLAsm asm) {
-    TemporalExpression temporalExpression = (TemporalExpression) asm.getTemporalExpr();
-    List<TemporalPrimaryExpr> temporalPrimaryExprsList;
-    
-    // Need to peel down quantifier layers to see if inner expr has primed vars
-    while(temporalExpression instanceof QuantifierExpr) {
-      temporalExpression = ((QuantifierExpr)temporalExpression).getTemporalExpr();
-    }
-    
-    if (temporalExpression instanceof TemporalPrimaryExpr) {
-      temporalPrimaryExprsList = new ArrayList<>();
-      temporalPrimaryExprsList.add((TemporalPrimaryExpr) temporalExpression);
-    } else {
-      temporalPrimaryExprsList = EcoreUtil2.getAllContentsOfType(temporalExpression, TemporalPrimaryExpr.class);
-    }
-    List<VarDecl> nonPrimedVarDeclsList = TypeSystemUtils.getNonPrimedVarDecls(temporalPrimaryExprsList);
-    List<VarDecl> primedVarDeclsList = TypeSystemUtils.getPrimedVarDecls(temporalPrimaryExprsList);
+	public static TypeCheckIssue typeCheck(LTLAsm asm) {
+		TemporalExpression temporalExpression = (TemporalExpression) asm.getTemporalExpr();
+		List<TemporalPrimaryExpr> temporalPrimaryExprsList;
 
-    if (asm.getSafety() != null) {
-      for (VarDecl primedVarDecl : primedVarDeclsList) {
-        if (TypeSystemUtils.isSysVarDecl(primedVarDecl) || TypeSystemUtils.isAuxVarDecl(primedVarDecl)) {
-          return new TypeCheckError(SpectraPackage.Literals.LTL_ASM__TEMPORAL_EXPR,
-              IssueMessages.ASM_SAFETY_CAN_ONLY_HAVE_PRIMED_ENV);
-        }
-      }
-    } else if (asm.getStateInv() != null) {
-      if (!primedVarDeclsList.isEmpty()) {
-        return new TypeCheckError(SpectraPackage.Literals.LTL_ASM__TEMPORAL_EXPR,
-             IssueMessages.STATEINV_NO_PRIMES);
-      }
-    } else if (asm.getStateInv() == null && asm.getJustice() == null) {
-      // ini
-      if (primedVarDeclsList != null && primedVarDeclsList.size() > 0) {
-        return new TypeCheckError(SpectraPackage.Literals.LTL_ASM__TEMPORAL_EXPR,
-            IssueMessages.ASM_INI_CANT_HAVE_PRIMED_VARS);
-      }
-      for (VarDecl nonPrimedVarDecl : nonPrimedVarDeclsList) {
-        if (TypeSystemUtils.isSysVarDecl(nonPrimedVarDecl) || TypeSystemUtils.isAuxVarDecl(nonPrimedVarDecl)) {
-          return new TypeCheckError(SpectraPackage.Literals.LTL_ASM__TEMPORAL_EXPR,
-              IssueMessages.ASM_INI_CAN_ONLY_HAVE_ENV_VARS);
-        }
-      }
-    }
-    return null;
-  }
+		// Need to peel down quantifier layers to see if inner expr has primed vars
+		while(temporalExpression instanceof QuantifierExpr) {
+			temporalExpression = ((QuantifierExpr)temporalExpression).getTemporalExpr();
+		}
+
+		BooleanAndString boolAndString = TypeSystemUtils.isBooleanExpression(temporalExpression);
+		if(!boolAndString.getBoolean()) {
+			return new TypeCheckError(SpectraPackage.Literals.LTL_ASM__TEMPORAL_EXPR,
+					IssueMessages.ASM_MUST_BE_BOOLEAN);
+		}
+
+		if (temporalExpression instanceof TemporalPrimaryExpr) {
+			temporalPrimaryExprsList = new ArrayList<>();
+			temporalPrimaryExprsList.add((TemporalPrimaryExpr) temporalExpression);
+		} else {
+			temporalPrimaryExprsList = EcoreUtil2.getAllContentsOfType(temporalExpression, TemporalPrimaryExpr.class);
+		}
+		List<VarDecl> nonPrimedVarDeclsList = TypeSystemUtils.getNonPrimedVarDecls(temporalPrimaryExprsList);
+		List<VarDecl> primedVarDeclsList = TypeSystemUtils.getPrimedVarDecls(temporalPrimaryExprsList);
+
+		if (asm.getSafety() != null) {
+			for (VarDecl primedVarDecl : primedVarDeclsList) {
+				if (TypeSystemUtils.isSysVarDecl(primedVarDecl) || TypeSystemUtils.isAuxVarDecl(primedVarDecl)) {
+					return new TypeCheckError(SpectraPackage.Literals.LTL_ASM__TEMPORAL_EXPR,
+							IssueMessages.ASM_SAFETY_CAN_ONLY_HAVE_PRIMED_ENV);
+				}
+			}
+		} else if (asm.getStateInv() != null) {
+			if (!primedVarDeclsList.isEmpty()) {
+				return new TypeCheckError(SpectraPackage.Literals.LTL_ASM__TEMPORAL_EXPR,
+						IssueMessages.STATEINV_NO_PRIMES);
+			}
+		} else if(asm.getJustice() != null) {
+			if (!primedVarDeclsList.isEmpty()) {
+				return new TypeCheckError(SpectraPackage.Literals.LTL_ASM__TEMPORAL_EXPR,
+						IssueMessages.ASM_JUSTICE_CANT_HAVE_PRIMED_VARS);
+			}
+		} else {
+			// ini
+			if (primedVarDeclsList != null && primedVarDeclsList.size() > 0) {
+				return new TypeCheckError(SpectraPackage.Literals.LTL_ASM__TEMPORAL_EXPR,
+						IssueMessages.ASM_INI_CANT_HAVE_PRIMED_VARS);
+			}
+			for (VarDecl nonPrimedVarDecl : nonPrimedVarDeclsList) {
+				if (TypeSystemUtils.isSysVarDecl(nonPrimedVarDecl) || TypeSystemUtils.isAuxVarDecl(nonPrimedVarDecl)) {
+					return new TypeCheckError(SpectraPackage.Literals.LTL_ASM__TEMPORAL_EXPR,
+							IssueMessages.ASM_INI_CAN_ONLY_HAVE_ENV_VARS);
+				}
+			}
+		}
+		return null;
+	}
 
 }

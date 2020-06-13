@@ -40,6 +40,7 @@ public class SpectraHighlightingConfiguration  extends DefaultHighlightingConfig
 	public static final String TYPE_CONSTANT_ID = "typeContant";
 	public static final String GUARANTEE_ID = "guarantee";
 	public static final String WEIGHT_ID = "weight";
+	public static final String REGEXP_ID = "regexp";
 	
 	@Override
 	public void configure(IHighlightingConfigurationAcceptor acceptor) {
@@ -48,6 +49,7 @@ public class SpectraHighlightingConfiguration  extends DefaultHighlightingConfig
 		acceptor.acceptDefaultHighlighting(TYPE_CONSTANT_ID, "TypeConstant", typeConstantTextStyle());
 		acceptor.acceptDefaultHighlighting(GUARANTEE_ID, "Guarantee", guaranteeTextStyle());
 		acceptor.acceptDefaultHighlighting(WEIGHT_ID, "Weight", weightTextStyle());
+		acceptor.acceptDefaultHighlighting(REGEXP_ID, "RegExp", defineRegExpTextStyle());
 	}
 
 	private TextStyle weightTextStyle() {
@@ -74,6 +76,13 @@ public class SpectraHighlightingConfiguration  extends DefaultHighlightingConfig
 	private TextStyle assumptionTextStyle() {
 		TextStyle textStyle = defaultTextStyle().copy();
 		textStyle.setColor(new RGB(0, 153, 0));
+		textStyle.setStyle(SWT.BOLD);
+		return textStyle;
+	}
+	
+	private TextStyle defineRegExpTextStyle() {
+		TextStyle textStyle = defaultTextStyle().copy();
+		textStyle.setColor(new RGB(255, 20, 147));
 		textStyle.setStyle(SWT.BOLD);
 		return textStyle;
 	}

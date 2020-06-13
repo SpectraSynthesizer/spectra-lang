@@ -52,6 +52,7 @@ import tau.smlab.syntech.spectra.TypedParam;
 import tau.smlab.syntech.spectra.TypedParamList;
 import tau.smlab.syntech.spectra.VarDecl;
 import tau.smlab.syntech.spectra.VarType;
+import tau.smlab.syntech.typesystem.TypeSystemUtils.NotArithmeticExpressionException;
 
 public class TypeSystemTemporalPrimaryExpr {
 
@@ -143,13 +144,34 @@ public class TypeSystemTemporalPrimaryExpr {
 				}
 			}
 		}
+		
+		if (temporalPrimaryExpr.getOperator() != null && TypeSystemUtils.ARRAY_FUNCTIONS.contains(temporalPrimaryExpr.getOperator())) {
+			
+			VarDecl varDecl = (VarDecl) temporalPrimaryExpr.getPointer();
+			VarType varType = TypeSystemUtils.getVarType(varDecl.getType());
+			
+			if (varType.getDimensions() == null || varType.getDimensions().size() == 0) {
+				return new TypeCheckError(SpectraPackage.Literals.TEMPORAL_PRIMARY_EXPR__OPERATOR,
+						IssueMessages.FUNCTION_APPLY_ONLY_ON_ARRAY);
+			} else if (TypeSystemUtils.isVarTypeBoolean(varType) && !TypeSystemUtils.BOOLEAN_ARRAY_FUNCTIONS.contains(temporalPrimaryExpr.getOperator())) {
+				return new TypeCheckError(SpectraPackage.Literals.TEMPORAL_PRIMARY_EXPR__OPERATOR,
+						IssueMessages.FUNCTION_CANT_APPLY_ON_BOOLEAN_ARRAY);
+			} else if (!TypeSystemUtils.isVarTypeBoolean(varType) && !TypeSystemUtils.NUMERIC_ARRAY_FUNCTIONS.contains(temporalPrimaryExpr.getOperator())) {
+				return new TypeCheckError(SpectraPackage.Literals.TEMPORAL_PRIMARY_EXPR__OPERATOR,
+						IssueMessages.FUNCTION_CANT_APPLY_ON_TYPE_ARRAY);
+			}
+			
+		} 
 
 		issue = checkDimensionsMatch(temporalPrimaryExpr);
 		if (issue != null) {
 			return issue;
 		}
 
-		return null;
+		issue = TypeSystemUtils.typeCheckCorrectWayOfAccessingArray(temporalPrimaryExpr,
+				SpectraPackage.Literals.TEMPORAL_PRIMARY_EXPR__POINTER);
+
+		return issue;
 	}
 
 	private static boolean isHasNestedNextExpression(TemporalExpression temporalExpression) {
@@ -187,6 +209,13 @@ public class TypeSystemTemporalPrimaryExpr {
 
 	private static TypeCheckIssue checkDimensionsMatch(TemporalPrimaryExpr temporalPrimaryExpr) {
 		List<TemporalExpression> specifiedLocations = temporalPrimaryExpr.getIndex();
+//		List<List<Integer>> specifiedLocations;
+//		try {
+//			specifiedLocations = TypeSystemUtils.calcArithmeticExpressions(temporalPrimaryExpr.getIndex());
+//		} catch (NotArithmeticExpressionException e) {
+//			return new TypeCheckError(SpectraPackage.Literals.TEMPORAL_PRIMARY_EXPR__INDEX,
+//					IssueMessages.INVALID_INDEX_EXP);
+//		}
 		VarType varType = null;
 		if (temporalPrimaryExpr.getPointer() instanceof VarDecl) {
 			VarDecl varDecl = (VarDecl) temporalPrimaryExpr.getPointer();
@@ -205,13 +234,25 @@ public class TypeSystemTemporalPrimaryExpr {
 		// declared var is an array
 		if (varDimensions != null && varDimensions.size() > 0 && specifiedLocations != null
 				&& specifiedLocations.size() > 0) {
-			if (specifiedLocations.size() > varDimensions.size()) {
+			if (specifiedLocations.size() != varDimensions.size()) {
 				return new TypeCheckError(SpectraPackage.Literals.TEMPORAL_PRIMARY_EXPR__INDEX,
 						IssueMessages.DIMENSIONS_DONT_MATCH);
 			}
+//			for(int i = 0; i < specifiedLocations.size(); i++) {
+//				if(specifiedLocations.get(i).get(0) < 0 || specifiedLocations.get(i).get(0) >= varDimensions.get(i)) {
+//					return new TypeCheckError(SpectraPackage.Literals.TEMPORAL_PRIMARY_EXPR__INDEX,
+//							IssueMessages.INDEX_OUT_OF_BOUNDS);
+//				}
+//				if(specifiedLocations.get(i).size() == 2) { //we have an index which is a reference to an integer variable, so we check that
+//					//the upper bound of its domain is valid w.r.t. the size of i-th dimension of the array
+//					if(specifiedLocations.get(i).get(1) >= varDimensions.get(i)) {
+//						return new TypeCheckError(SpectraPackage.Literals.TEMPORAL_PRIMARY_EXPR__INDEX,
+//								IssueMessages.INDEX_OUT_OF_BOUNDS);
+//					}
+//				}
+//			}
 		}
 		return null;
-
 	}
 
 	private static TypeCheckIssue checkLegalParamsOfPattern(TemporalPrimaryExpr temporalPrimaryExpr) {
@@ -222,7 +263,7 @@ public class TypeSystemTemporalPrimaryExpr {
 			if (!isTemporalExpressionBoolean.getBoolean()) {
 				return new TypeCheckError(SpectraPackage.Literals.TEMPORAL_PRIMARY_EXPR__PRED_PATT,
 						IssueMessages.PATTERN_PARAMS_ARE_BOOLEAN + ": " + isTemporalExpressionBoolean.getString()
-								+ " in argument number: " + argNumber);
+						+ " in argument number: " + argNumber);
 			}
 			argNumber++;
 		}
@@ -331,13 +372,25 @@ public class TypeSystemTemporalPrimaryExpr {
 	}
 
 	private static TypeCheckIssue chekNumberOfArgumentsMatch(TemporalPrimaryExpr temporalPrimaryExpr) {
-		int numOfPassedArguments = temporalPrimaryExpr.getPredPattParams().size();
+		int numOfPassedArguments;
+		if(temporalPrimaryExpr.getPredPattParams() != null) {
+			numOfPassedArguments = temporalPrimaryExpr.getPredPattParams().size();			
+		}
+		else {
+			numOfPassedArguments = 0;
+		}
+
 		int numOfArgumentsInSignature = -1;
 
 		if (temporalPrimaryExpr.getPredPatt() instanceof Predicate) {
 			Predicate predicate = (Predicate) temporalPrimaryExpr.getPredPatt();
 			TypedParamList predicateParamsList = predicate.getParams();
-			numOfArgumentsInSignature = predicateParamsList.getParams().size();
+			if(predicateParamsList != null) {
+				numOfArgumentsInSignature = predicateParamsList.getParams().size();
+			}
+			else {
+				numOfArgumentsInSignature = 0;
+			}
 		} else if (temporalPrimaryExpr.getPredPatt() instanceof Pattern) {
 			Pattern pattern = (Pattern) temporalPrimaryExpr.getPredPatt();
 			PatternParamList patternParamsList = pattern.getParams();
