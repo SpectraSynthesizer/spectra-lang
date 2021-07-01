@@ -71,14 +71,7 @@ public class TypeSystemLTLGar {
 					return new TypeCheckError(SpectraPackage.Literals.LTL_GAR__TEMPORAL_EXPR,
 							IssueMessages.GAR_JUSTICE_CANT_HAVE_PRIMED_VARS);
 				}  
-			}
-			else if(gar.getStateInv() != null) { //State invariant (alw)
-				if (primedVarDecls != null && primedVarDecls.size() > 0) {
-					return new TypeCheckError(SpectraPackage.Literals.LTL_GAR__TEMPORAL_EXPR,
-							IssueMessages.STATEINV_NO_PRIMES);
-				}
-			}
-			else if (gar.getSafety() == null) {
+			}	else if (gar.getSafety() == null && gar.getStateInv() == null) {
 				//INI
 				if (primedVarDecls != null && primedVarDecls.size() > 0) {
 					return new TypeCheckError(SpectraPackage.Literals.LTL_GAR__TEMPORAL_EXPR,

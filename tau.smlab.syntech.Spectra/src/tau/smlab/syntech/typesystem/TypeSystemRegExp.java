@@ -31,6 +31,7 @@ package tau.smlab.syntech.typesystem;
 import tau.smlab.syntech.spectra.RegExp;
 import tau.smlab.syntech.spectra.SpectraPackage;
 import tau.smlab.syntech.spectra.UnaryRegExp;
+import tau.smlab.syntech.typesystem.TypeSystemUtils.NotArithmeticExpressionException;
 
 public class TypeSystemRegExp {
 
@@ -40,7 +41,26 @@ public class TypeSystemRegExp {
 		if(regExp instanceof UnaryRegExp) {
 			UnaryRegExp unaryRegExp = (UnaryRegExp) regExp;
 			if(unaryRegExp.isHaveRange()) {
-				if(unaryRegExp.getFrom() > unaryRegExp.getTo()) {
+				int from = unaryRegExp.getFrom();
+				int to = unaryRegExp.getTo();
+				
+				try {
+					if (unaryRegExp.getFromDefine() != null) {						
+						from = TypeSystemUtils.calcArithmeticExpression(unaryRegExp.getFromDefine().getSimpleExpr()); 
+					}
+				} catch (NotArithmeticExpressionException e) {
+					return new TypeCheckError(SpectraPackage.Literals.UNARY_REG_EXP__FROM_DEFINE, IssueMessages.REGEXP_INVALID_RANGE_QUANTIFIER_NOT_A_NUMBER);
+				}
+				
+				try {					
+					if (unaryRegExp.getToDefine() != null) {
+						to = TypeSystemUtils.calcArithmeticExpression(unaryRegExp.getToDefine().getSimpleExpr()); 
+					}							
+				} catch (NotArithmeticExpressionException e) {
+					return new TypeCheckError(SpectraPackage.Literals.UNARY_REG_EXP__TO_DEFINE, IssueMessages.REGEXP_INVALID_RANGE_QUANTIFIER_NOT_A_NUMBER);
+				}
+				
+				if(from > to) {
 					return new TypeCheckError(SpectraPackage.Literals.UNARY_REG_EXP__HAVE_RANGE, IssueMessages.REGEXP_INVALID_RANGE_QUANTIFIER);
 				}
 			}

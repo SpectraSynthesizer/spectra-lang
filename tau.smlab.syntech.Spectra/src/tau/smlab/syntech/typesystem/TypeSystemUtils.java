@@ -43,6 +43,7 @@ import org.eclipse.xtext.EcoreUtil2;
 
 import tau.smlab.syntech.spectra.Constant;
 import tau.smlab.syntech.spectra.Counter;
+import tau.smlab.syntech.spectra.DefineArray;
 import tau.smlab.syntech.spectra.DefineDecl;
 import tau.smlab.syntech.spectra.DefineRegExpDecl;
 import tau.smlab.syntech.spectra.DomainVarDecl;
@@ -76,21 +77,25 @@ public class TypeSystemUtils {
 	private final static String NEXT = "next";
 	private final static String BOOLEAN = "boolean";
 	private final static String MINUS = "-";
+	private final static String MAX = "max";
+	private final static String MIN = "min";
 	private static final String NOT = "!";
 	private static final String SYS = "SYS";
 	private static final String AUX = "AUX";
-	
+
+	public static final String NUMERIC_ARRAY_MIN_OF = ".min";
+	public static final String NUMERIC_ARRAY_MAX_OF = ".max";
 	public static final String NUMERIC_ARRAY_SUM_OF = ".sum";
 	public static final String NUMERIC_ARRAY_PROD_OF = ".prod";
 	public static final String BOOL_ARRAY_AND_OF = ".all";
 	public static final String BOOL_ARRAY_OR_OF = ".any";
 	
-	public static final List<String> NUMERIC_ARRAY_FUNCTIONS = Stream.of(NUMERIC_ARRAY_SUM_OF, NUMERIC_ARRAY_PROD_OF).collect(Collectors.toList());
-	public static final List<String> BOOLEAN_ARRAY_FUNCTIONS = Stream.of(BOOL_ARRAY_AND_OF, BOOL_ARRAY_OR_OF).collect(Collectors.toList());
+	public static final List<String> NUMERIC_ARRAY_FUNCTIONS = Stream.of(NUMERIC_ARRAY_SUM_OF, NUMERIC_ARRAY_PROD_OF, NUMERIC_ARRAY_MIN_OF, NUMERIC_ARRAY_MAX_OF)
+			.collect(Collectors.toList());
+	public static final List<String> BOOLEAN_ARRAY_FUNCTIONS = Stream.of(BOOL_ARRAY_AND_OF, BOOL_ARRAY_OR_OF)
+			.collect(Collectors.toList());
 	public static final List<String> ARRAY_FUNCTIONS = Stream.of(NUMERIC_ARRAY_FUNCTIONS, BOOLEAN_ARRAY_FUNCTIONS)
-            												.flatMap(x -> x.stream())
-            												.collect(Collectors.toList());
-	
+			.flatMap(x -> x.stream()).collect(Collectors.toList());
 
 	// @Inject static SpectraGrammarAccess grammarAccess;
 
@@ -146,7 +151,18 @@ public class TypeSystemUtils {
 						// "no problem" here.
 					}
 					alreadySeenDefineDecls.add(defineDecl.getName());
-					TemporalExpression defineExpression = defineDecl.getSimpleExpr();
+					TemporalExpression defineExpression;
+					if (defineDecl.getSimpleExpr() != null) {
+						defineExpression = defineDecl.getSimpleExpr();
+					} else {
+						// Check the first because mixing boolean and numeric in defines is already checked before
+						DefineArray defArray = defineDecl.getInnerArray();
+						while (defArray.getSimpleExprs() == null || defArray.getSimpleExprs().size() == 0) {
+							defArray = defArray.getInnerArrays().get(0);
+						}
+						defineExpression = defArray.getSimpleExprs().get(0);
+					}
+
 					BooleanAndString isDefineExpressionBoolean = isBooleanExpression(defineExpression,
 							alreadySeenDefineDecls); // go inside
 					if (!isDefineExpressionBoolean.getBoolean()) {
@@ -166,6 +182,9 @@ public class TypeSystemUtils {
 			if (temporalPrimaryExp.getOperator() != null) {
 				if (temporalPrimaryExp.getOperator().equals(MINUS)) {
 					return new BooleanAndString(false, "An expression that starts with '-' found");
+				}
+				if (temporalPrimaryExp.getOperator().equals(MIN) || temporalPrimaryExp.getOperator().equals(MAX)) {
+					return new BooleanAndString(false);
 				}
 				if (temporalPrimaryExp.getOperator().equals(NEXT)) {
 					TemporalExpression temporalExpressionWithinNext = temporalPrimaryExp.getTemporalExpression();
@@ -257,8 +276,8 @@ public class TypeSystemUtils {
 
 	/**
 	 * 
-	 * @return DomainVarDecl nested in TemporalPrimaryExpr. return null if no VarDecl at
-	 *         all
+	 * @return DomainVarDecl nested in TemporalPrimaryExpr. return null if no
+	 *         VarDecl at all
 	 */
 	public static DomainVarDecl extractDomainVarDeclFromTemporalPrimaryExpr(TemporalPrimaryExpr temporalPrimaryExpr) {
 		if (temporalPrimaryExpr.getPointer() != null) {
@@ -296,7 +315,6 @@ public class TypeSystemUtils {
 		}
 		return null;
 	}
-
 
 	/**
 	 * 
@@ -590,17 +608,25 @@ public class TypeSystemUtils {
 			if (temporalPrimaryExpr.getPointer() instanceof VarDecl) {
 				VarDecl varDecl = (VarDecl) temporalPrimaryExpr.getPointer();
 				VarType varType = getVarType(varDecl.getType());
-				if (varType.getDimensions() != null && varType.getDimensions().size() > 0 && !ARRAY_FUNCTIONS.contains(temporalPrimaryExpr.getOperator())) {
+				if (varType.getDimensions() != null && varType.getDimensions().size() > 0
+						&& !ARRAY_FUNCTIONS.contains(temporalPrimaryExpr.getOperator())) {
 					return new TypeCheckError(eReference,
 							IssueMessages.ILLEGAL_ACCESS_TO_ARRAY + " '" + varDecl.getName() + "'");
 				}
-			}
-			else if (temporalPrimaryExpr.getPointer() instanceof TypedParam) {
+			} else if (temporalPrimaryExpr.getPointer() instanceof TypedParam) {
 				TypedParam typedParam = (TypedParam) temporalPrimaryExpr.getPointer();
 				VarType varType = getVarType(typedParam.getType());
-				if (varType.getDimensions() != null && varType.getDimensions().size() > 0 && !ARRAY_FUNCTIONS.contains(temporalPrimaryExpr.getOperator())) {
-					return new TypeCheckError(eReference, IssueMessages.ILLEGAL_ACCESS_TO_ARRAY + " '"
-							+ typedParam.getName() + "'");
+				if (varType.getDimensions() != null && varType.getDimensions().size() > 0
+						&& !ARRAY_FUNCTIONS.contains(temporalPrimaryExpr.getOperator())) {
+					return new TypeCheckError(eReference,
+							IssueMessages.ILLEGAL_ACCESS_TO_ARRAY + " '" + typedParam.getName() + "'");
+				}
+			} else if (temporalPrimaryExpr.getPointer() instanceof DefineDecl) {
+				DefineDecl defineDecl = (DefineDecl) temporalPrimaryExpr.getPointer();
+				if (defineDecl.getDimensions() != null && defineDecl.getDimensions().size() > 0
+						&& !ARRAY_FUNCTIONS.contains(temporalPrimaryExpr.getOperator())) {
+					return new TypeCheckError(eReference,
+							IssueMessages.ILLEGAL_ACCESS_TO_DEFINE_ARRAY + " '" + defineDecl.getName() + "'");
 				}
 			}
 		}
@@ -614,14 +640,16 @@ public class TypeSystemUtils {
 			if (temporalPrimaryExpr.getPointer() instanceof VarDecl) {
 				VarDecl varDecl = (VarDecl) temporalPrimaryExpr.getPointer();
 				VarType varType = getVarType(varDecl.getType());
-				if (varType.getDimensions() != null && varType.getDimensions().size() > 0 && !ARRAY_FUNCTIONS.contains(temporalPrimaryExpr.getOperator())) {
+				if (varType.getDimensions() != null && varType.getDimensions().size() > 0
+						&& !ARRAY_FUNCTIONS.contains(temporalPrimaryExpr.getOperator())) {
 					return new TypeCheckError(eAttribute,
 							IssueMessages.ILLEGAL_ACCESS_TO_ARRAY + " '" + varDecl.getName() + "' (" + side + " side)");
 				}
 			} else if (temporalPrimaryExpr.getPointer() instanceof TypedParam) {
 				TypedParam typedParam = (TypedParam) temporalPrimaryExpr.getPointer();
 				VarType varType = getVarType(typedParam.getType());
-				if (varType.getDimensions() != null && varType.getDimensions().size() > 0 && !ARRAY_FUNCTIONS.contains(temporalPrimaryExpr.getOperator())) {
+				if (varType.getDimensions() != null && varType.getDimensions().size() > 0
+						&& !ARRAY_FUNCTIONS.contains(temporalPrimaryExpr.getOperator())) {
 					return new TypeCheckError(eAttribute, IssueMessages.ILLEGAL_ACCESS_TO_ARRAY + " '"
 							+ typedParam.getName() + "' (" + side + " side)");
 				}
@@ -706,35 +734,33 @@ public class TypeSystemUtils {
 			throws NotArithmeticExpressionException {
 
 		List<List<Integer>> out = new ArrayList<>();
-		for(TemporalExpression arithmeticExpr : arithmeticExprList) {
+		for (TemporalExpression arithmeticExpr : arithmeticExprList) {
 			try {
 				out.add(Arrays.asList(calcArithmeticExpression(arithmeticExpr)));
 			} catch (NotArithmeticExpressionException e) {
-				if ((arithmeticExpr instanceof TemporalPrimaryExpr) &&
-						(((TemporalPrimaryExpr)arithmeticExpr).getPointer() instanceof VarDecl)) {
+				if ((arithmeticExpr instanceof TemporalPrimaryExpr)
+						&& (((TemporalPrimaryExpr) arithmeticExpr).getPointer() instanceof VarDecl)) {
 
-					//we have an index which is a variable reference
+					// we have an index which is a variable reference
 					TemporalPrimaryExpr temporalPrimaryExpr = (TemporalPrimaryExpr) arithmeticExpr;
 					VarDecl varDecl = (VarDecl) temporalPrimaryExpr.getPointer();
 					VarType varType = TypeSystemUtils.getVarType(varDecl.getType());
 
-					//if(!isVarTypeNumeric(varDecl.getType())) {throw e;}
-					if(varType.getSubr() == null) { //Non-Integer typed variable (non-numeric, invalid index)
+					// if(!isVarTypeNumeric(varDecl.getType())) {throw e;}
+					if (varType.getSubr() == null) { // Non-Integer typed variable (non-numeric, invalid index)
 						throw e;
 					}
 
-					//add domain interval to the list
+					// add domain interval to the list
 					out.add(Arrays.asList(TypeSystemUtils.sizeDefineToInt(varType.getSubr().getFrom()),
 							TypeSystemUtils.sizeDefineToInt(varType.getSubr().getTo())));
-				}
-				else {
+				} else {
 					throw e;
 				}
 			}
 		}
 		return out;
 	}
-
 
 	// Calculate the int value of an arithmetic expression
 	public static int calcArithmeticExpression(TemporalExpression arithmeticExpr)
@@ -832,24 +858,18 @@ public class TypeSystemUtils {
 
 	private static List<String> getPermittedTypeConstants(VarType varType, List<String> alreadySeenTypeDefs) {
 
-		if (varType.getConst() != null && varType.getConst().size() > 0)
-		{
+		if (varType.getConst() != null && varType.getConst().size() > 0) {
 			List<String> permittedTypeconstants = new ArrayList<>();
-			for (TypeConstant typeConstant : varType.getConst())
-			{
+			for (TypeConstant typeConstant : varType.getConst()) {
 				permittedTypeconstants.add(typeConstant.getName());
 			}
 			return permittedTypeconstants;
 		}
-		if (varType.getType() != null)
-		{
-			if (alreadySeenTypeDefs == null)
-			{
+		if (varType.getType() != null) {
+			if (alreadySeenTypeDefs == null) {
 				alreadySeenTypeDefs = new ArrayList<>();
-			}
-			else if(alreadySeenTypeDefs.contains(varType.getType().getName()))
-			{
-				return null; //meaningless, just to prevent stackoverflow
+			} else if (alreadySeenTypeDefs.contains(varType.getType().getName())) {
+				return null; // meaningless, just to prevent stackoverflow
 			}
 			alreadySeenTypeDefs.add(varType.getType().getName());
 			VarType varTypeOfTypeDef = varType.getType().getType();

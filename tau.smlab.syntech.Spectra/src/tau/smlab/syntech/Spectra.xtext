@@ -54,7 +54,7 @@ Decl:
 
 WeightDef:
 	'weight' (name=ID ':')? negative=('-')? value=INT
-	definition=TemporalImpExpr TOK_SEMI;
+	definition=TemporalInExpr TOK_SEMI;
 
 enum VarOwner: SYS='output' | SYS='out' | SYS='sysvar' | SYS='sys' |  ENV='input' |  ENV='in' | ENV='envvar' |  ENV='env' | AUX='auxvar' | AUX='aux';
 
@@ -78,9 +78,14 @@ TypeConstantLiteral:
 
 Define:
 	'define' (defineList+=DefineDecl)+;
-
+	
 DefineDecl:
-	name=ID ':=' simpleExpr=TemporalExpression TOK_SEMI;
+	((name=ID ':=' simpleExpr=TemporalExpression) |
+	(name=ID ('[' dimensions+=SizeDefineDecl ']')+ ':=' innerArray=DefineArray ))
+	TOK_SEMI;
+	
+DefineArray:
+	'{' (simpleExprs+=TemporalExpression (',' simpleExprs+=TemporalExpression)*) '}' | '{' (innerArrays+=DefineArray (',' innerArrays+=DefineArray)*) '}' ;
 	
 DefineRegExp:
   'regexp' (defineRegsList+=DefineRegExpDecl)+;
@@ -104,8 +109,8 @@ enum OverflowMethod: KEEP='keep' | FALSE='false' | MODULO='modulo';
 
 Counter:
 	'counter' name=ID ('(' range=Subrange ')') 
-  '{' (((initial+=TemporalImpExpr)
-  	| ('reset:' resetPred+=TemporalImpExpr)
+  '{' (((initial+=TemporalInExpr)
+  	| ('reset:' resetPred+=TemporalInExpr)
   	| ('inc:' incPred+=TemporalExpression)
   	| ('dec:' decPred+=TemporalExpression)
   	| ('overflow:' overflowMethod+=OverflowMethod)
@@ -114,18 +119,18 @@ Counter:
 	
 Monitor:
   'monitor' type=VarType name=ID '{' ((
-    (('ini' | 'initially')? initial+=TemporalImpExpr) |    
-    (('G' | 'trans') safety+=TemporalImpExpr) |
-    (('always' | 'alw') stateInv+=TemporalImpExpr)
+    (('ini' | 'initially')? initial+=TemporalInExpr) |    
+    (('G' | 'trans') safety+=TemporalInExpr) |
+    (('always' | 'alw') stateInv+=TemporalInExpr)
   ) TOK_SEMI)* '}';
   
 Pattern:
 	'pattern' name=ID ('(' params=PatternParamList ')')?
 	('{' ('var' varDeclList+=VarDecl)* ((
-	  (('ini' | 'initially')? initial+=TemporalImpExpr) | 
-	  (('G' | 'trans') safety+=TemporalImpExpr) |
-	  (('always' | 'alw') stateInv+=TemporalImpExpr) |  
-	  (('GF' | 'alwEv'| 'alwaysEventually') justice+=TemporalImpExpr)
+	  (('ini' | 'initially')? initial+=TemporalInExpr) | 
+	  (('G' | 'trans') safety+=TemporalInExpr) |
+	  (('always' | 'alw') stateInv+=TemporalInExpr) |  
+	  (('GF' | 'alwEv'| 'alwaysEventually') justice+=TemporalInExpr)
 	) TOK_SEMI)+ '}');
 
 Predicate:
@@ -153,10 +158,13 @@ LTLAsm:
 
 EXGar:	
   ('guarantee' | 'gar') (name=ID ':')?
-  (('GE' elements+=TemporalImpExpr (',' elements+=TemporalImpExpr)*) | ('GEF' regExpPointer = [DefineRegExpDecl]) | ('GEF' regExp = RegExp)) TOK_SEMI;
+  (('GE' elements+=TemporalInExpr (',' elements+=TemporalInExpr)*) | ('GEF' regExpPointer = [DefineRegExpDecl]) | ('GEF' regExp = RegExp)) TOK_SEMI;
 
 TemporalExpression:
   QuantifierExpr;
+	
+TemporalInExpr returns TemporalExpression:
+	TemporalImpExpr ({TemporalInExpr.left=current} (not?='not')? operator=('in') '{'  values+=ValueInRange (',' values+=ValueInRange)* '}')?;
 	
 TemporalImpExpr returns TemporalExpression:
 	TemporalIffExpr ({TemporalImpExpr.left=current} operator=('->' | 'implies') implication=TemporalImpExpr)?;
@@ -196,15 +204,17 @@ TemporalPrimaryExpr returns TemporalExpression:
 	Constant
 	| '(' QuantifierExpr ')'
 	| {TemporalPrimaryExpr}
-	 (predPatt=[PredicateOrPatternReferrable] ('(' predPattParams+=TemporalImpExpr (',' predPattParams+=TemporalImpExpr)* ')' | '()')
+	 (predPatt=[PredicateOrPatternReferrable] ('(' predPattParams+=TemporalInExpr (',' predPattParams+=TemporalInExpr)* ')' | '()')
 	 | operator=('-'|'!') tpe=TemporalPrimaryExpr
-	 | pointer=[Referrable]('[' index+=TemporalImpExpr ']')* 
-	 | operator='next' '(' temporalExpression=TemporalImpExpr ')'
+	 | pointer=[Referrable]('[' index+=TemporalInExpr ']')* 
+	 | operator='next' '(' temporalExpression=TemporalInExpr ')'
 	 | operator='regexp' '(' (regexp=RegExp | regexpPointer=[DefineRegExpDecl]) ')'
 	 | pointer=[Referrable] operator='.all'
 	 | pointer=[Referrable] operator='.any'
 	 | pointer=[Referrable] operator='.prod'
-	 | pointer=[Referrable] operator='.sum');
+	 | pointer=[Referrable] operator='.sum'
+	 | pointer=[Referrable] operator='.min'
+	 | pointer=[Referrable] operator='.max');
 	// |Trigger;
 	
 PredicateOrPatternReferrable:
@@ -240,7 +250,7 @@ RegExp:
  		(plus?='+')|
         (haveExactRepetition?='{' exactRepetition=INT '}')| 
         (haveAtLeast?='{' atLeast=INT ',' '}')| 
-        (haveRange?='{' from=INT ',' to=INT '}')))?;
+        (haveRange?='{' (from=INT | fromDefine=[DefineDecl]) ',' (to=INT | toDefine=[DefineDecl]) '}')))?;
  
  CompRegExp returns RegExp:
  	PrimaryRegExp | ({CompRegExp} (comp='~') left=CompRegExp);
@@ -249,7 +259,7 @@ PrimaryRegExp returns RegExp:
 	'(' RegExp ')' | val=('TRUE' |'FALSE' | 'true' | 'false') | assrt=BooleanTerm  | empty?='()'; //| (neg?='!')? pointer=[VarDecl]
 
 BooleanTerm:
-	{BooleanTerm} '[' (((pointer=[VarDecl] (not?='not')? 'in' '{'  values+=ValueInRange (',' values+=ValueInRange)* '}')) |  relExpr=TemporalImpExpr) ']';
+	{BooleanTerm} '[' relExpr=TemporalInExpr ']';
 
 ValueInRange:
 	 const=[TypeConstant] | int=INT | (from=INT multi?='-' to=INT) | booleanValue=('TRUE' |'FALSE' | 'true' | 'false');
@@ -276,7 +286,7 @@ ValueInRange:
                     
 //quantifier expression - a temporal logic expression with quantifiers.
 QuantifierExpr returns TemporalExpression:
-  TemporalImpExpr
+  TemporalInExpr
   |{QuantifierExpr}
   (operator=('forall' | 'exists') domainVar=DomainVarDecl '.' temporalExpr=(QuantifierExpr));
 

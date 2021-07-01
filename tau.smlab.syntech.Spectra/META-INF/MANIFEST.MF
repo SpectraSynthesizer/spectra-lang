@@ -30,4 +30,4 @@ Export-Package: tau.smlab.syntech,
  tau.smlab.syntech.typesystem,
  tau.smlab.syntech.validation
 Import-Package: org.apache.log4j
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Automatic-Module-Name: tau.smlab.syntech.Spectra

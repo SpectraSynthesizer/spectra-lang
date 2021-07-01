@@ -73,8 +73,7 @@ class SpectraTypeCheckTest {
 	def void testArithmetics1() {
 		val value = '''
 			module Moo
-			gar:
-			3+true;
+			gar 3+true;
 		'''.parse
 		value.assertError(SpectraPackage::eINSTANCE.temporalAdditiveExpr, null,
 			IssueMessages.ADDITIVE_EXP_ARGUMENTS_MUST_BE_NUMERIC);
@@ -84,8 +83,7 @@ class SpectraTypeCheckTest {
 	def void testArithmetics2() {
 		val value = '''
 			module Moo
-			gar:
-			3-true;
+			gar 3-true;
 		'''.parse
 		value.assertError(SpectraPackage::eINSTANCE.temporalAdditiveExpr, null,
 			IssueMessages.ADDITIVE_EXP_ARGUMENTS_MUST_BE_NUMERIC);
@@ -95,8 +93,7 @@ class SpectraTypeCheckTest {
 	def void testArithmetics3() {
 		val value = '''
 			module Moo
-			gar:
-			3*true;
+			gar 3*true;
 		'''.parse
 		value.assertError(SpectraPackage::eINSTANCE.temporalMultiplicativeExpr, null,
 			IssueMessages.MULTIPLICATIVE_EXP_ARGUMENTS_MUST_BE_NUMERIC);
@@ -106,8 +103,7 @@ class SpectraTypeCheckTest {
 	def void testArithmetics4() {
 		val value = '''
 			module Moo
-			gar:
-			3/true;
+			gar 3/true;
 		'''.parse
 		value.assertError(SpectraPackage::eINSTANCE.temporalMultiplicativeExpr, null,
 			IssueMessages.MULTIPLICATIVE_EXP_ARGUMENTS_MUST_BE_NUMERIC);
@@ -117,8 +113,7 @@ class SpectraTypeCheckTest {
 	def void testArithmetics5() {
 		val value = '''
 			module Moo
-			gar:
-			3 mod true;
+			gar 3 mod true;
 		'''.parse
 		value.assertError(SpectraPackage::eINSTANCE.temporalRemainderExpr, null,
 			IssueMessages.MOD_EXP_ARGUMENTS_MUST_BE_NUMERIC);
@@ -901,6 +896,48 @@ class SpectraTypeCheckTest {
 		'''.parse
 		value.assertNoErrors;
 	}
+	
+	@Test
+	def void testMinFunctionOnIntArray(){
+		val value = '''
+			module Moo
+			sys Int(0..5)[8] arr;
+			gar G arr.min < 10;
+		'''.parse
+		value.assertNoErrors;
+	}
+	
+	@Test
+	def void testMaxFunctionOnIntArray(){
+		val value = '''
+			module Moo
+			sys Int(0..5)[8] arr;
+			gar G arr.max < 10;
+		'''.parse
+		value.assertNoErrors;
+	}
+	
+	@Test
+	def void testMinFunctionOnBooleanArray(){
+		val value = '''
+			module Moo
+			sys boolean[8] arr;
+			gar G arr.min;
+		'''.parse
+		value.assertError(SpectraPackage::eINSTANCE.temporalPrimaryExpr, null,
+			IssueMessages.FUNCTION_CANT_APPLY_ON_BOOLEAN_ARRAY);
+	}
+	
+	@Test
+	def void testMaxFunctionOnBooleanArray(){
+		val value = '''
+			module Moo
+			sys boolean[8] arr;
+			gar G arr.max;
+		'''.parse
+		value.assertError(SpectraPackage::eINSTANCE.temporalPrimaryExpr, null,
+			IssueMessages.FUNCTION_CANT_APPLY_ON_BOOLEAN_ARRAY);
+	}
 
 	
 	@Test
@@ -939,4 +976,293 @@ class SpectraTypeCheckTest {
 		'''.parse
 		value.assertNoErrors;
 	}
-}
+	
+	@Test
+	def void testDefineArrayNonConstantIndex() {
+		val value = '''
+			module Moo
+			define a1[4] := {0, 1, a1[ind], 2};
+			sys Int(0..8) ind;
+			gar G forall i in Int(0..3) . ind = a1[i];
+		'''.parse
+		value.assertError(SpectraPackage::eINSTANCE.defineDecl, null,
+			IssueMessages.DEFINEDECL_NON_CONSTANT_INDEX);
+	}
+	
+	@Test
+	def void testDefineArrayBadSize1() {
+		val value = '''
+			module Moo
+			define N := 4;
+			define a1[N] := {0, 2};
+			sys Int(0..8) ind;
+			gar G forall i in Int(0..3) . ind = a1[i];
+		'''.parse
+		value.assertError(SpectraPackage::eINSTANCE.defineDecl, null,
+			IssueMessages.DEFINEDECL_INDEXES_DONT_MATCH);
+	}
+	
+	@Test
+	def void testDefineArrayBadSize2() {
+		val value = '''
+			module Moo
+			define a1[4][2] := {{5,4}, {0,6,7,8}, {1,8}, {{1,2},{3,4}}};
+			sys Int(0..8) ind;
+			gar G forall i in Int(0..3) . ind = a1[i][i];
+		'''.parse
+		value.assertError(SpectraPackage::eINSTANCE.defineDecl, null,
+			IssueMessages.DEFINEDECL_INDEXES_DONT_MATCH);
+	}
+	
+	@Test
+	def void testDefineArrayBadInnerDefine1() {
+		val value = '''
+			module Moo
+			define a1[2] := {0, a1[0][2]};
+			sys Int(0..8) ind;
+			gar G forall i in Int(0..3) . ind = a1[i];
+		'''.parse
+		value.assertError(SpectraPackage::eINSTANCE.defineDecl, null,
+			IssueMessages.DIMENSIONS_DONT_MATCH);
+	}
+	
+	@Test
+	def void testDefineArrayBadInnerDefine2() {
+		val value = '''
+			module Moo
+			define a1[2] := {0, a1};
+			sys Int(0..8) ind;
+			gar G ind = a1[0];
+		'''.parse
+		value.assertError(SpectraPackage::eINSTANCE.temporalPrimaryExpr, null,
+			IssueMessages.ILLEGAL_ACCESS_TO_DEFINE_ARRAY);
+	}
+	
+	@Test
+	def void testDefineArrayInnerOutOfBounds() {
+		val value = '''
+			module Moo
+			define a1[2] := {0, a1[10]};
+			sys Int(0..8) ind;
+			gar G forall i in Int(0..3) . ind = a1[i];
+		'''.parse
+		value.assertError(SpectraPackage::eINSTANCE.defineDecl, null,
+			IssueMessages.INDEX_OUT_OF_BOUNDS);
+	}
+	
+	@Test
+	def void testDefineArrayBadDimensions1() {
+		val value = '''
+			module Moo
+			define a1[2] := {0, 2};
+			sys Int(0..8) ind;
+			gar G forall i in Int(0..3) . ind = a1[i][0][2];
+		'''.parse
+		value.assertError(SpectraPackage::eINSTANCE.temporalPrimaryExpr, null,
+			IssueMessages.DIMENSIONS_DONT_MATCH);
+	}
+	
+	@Test
+	def void testDefineArrayBadDimensions2() {
+		val value = '''
+			module Moo
+			define a1[2] := {0, 2};
+			sys Int(0..8) ind;
+			gar G ind = a1;
+		'''.parse
+		value.assertError(SpectraPackage::eINSTANCE.temporalPrimaryExpr, null,
+			IssueMessages.ILLEGAL_ACCESS_TO_DEFINE_ARRAY);
+	}
+	
+	@Test
+	def void testDefineArrayOutOfBounds() {
+		val value = '''
+			module Moo
+			define a1[2] := {0, a1[0]};
+			sys Int(0..8) ind;
+			gar G ind = a1[6];
+		'''.parse
+		value.assertError(SpectraPackage::eINSTANCE.temporalPrimaryExpr, null,
+			IssueMessages.INDEX_OUT_OF_BOUNDS);
+	}
+	
+	@Test
+	def void testDefineArrayCycle1() {
+		val value = '''
+			module Moo
+			define a1[4] := {0, 1, a1[2], 2};
+			sys Int(0..8) ind;
+			gar G ind = a1[1];
+		'''.parse
+		value.assertError(SpectraPackage::eINSTANCE.defineDecl, null,
+			IssueMessages.DEFINEDECL_CONTAINS_CYCLES);
+	}
+	
+	@Test
+	def void testDefineArrayCycle2() {
+		val value = '''
+			module Moo
+			define a0 := a2[0][0];
+			define a1[4] := {a0, 1, a1[1], 2};
+			define a2[2][2] := {{a1[0],a1[2]}, {2,4}, {ind,ind-2}};
+			sys Int(0..8) ind;
+			gar G ind = a1[1];
+		'''.parse
+		value.assertError(SpectraPackage::eINSTANCE.defineDecl, null,
+			IssueMessages.DEFINEDECL_CONTAINS_CYCLES);
+	}
+	
+	@Test
+	def void testDefineArrayMixingTypes1() {
+		val value = '''
+			module Moo
+			define a1[4] := {arr1[2], arr1[2] = 1, 4, false};
+			sys Int(0..8) ind;
+			gar G ind = a1[1];
+		'''.parse
+		value.assertError(SpectraPackage::eINSTANCE.defineDecl, null,
+			IssueMessages.DEFINEDECL_DIFFERENT_TYPES);
+	}
+	
+	@Test
+	def void testDefineArrayMixingTypes2() {
+		val value = '''
+			module Moo
+			define a1[2][2] := {{false, arr1[2] = 1}, {4, arr1[2]}};
+			sys Int(0..8) ind;
+			gar G ind = a1[1][1];
+		'''.parse
+		value.assertError(SpectraPackage::eINSTANCE.defineDecl, null,
+			IssueMessages.DEFINEDECL_DIFFERENT_TYPES);
+	}
+	
+	@Test
+	def void testDefineInvalidDimensions() {
+		val value = '''
+			module Moo
+			define bool_def := (i = 3);
+			define a1[bool_def] := {5,6,7,8};
+			sys Int(0..8) i;
+			gar G i = a1[1];
+		'''.parse
+		value.assertError(SpectraPackage::eINSTANCE.defineDecl, null,
+			IssueMessages.NON_INT_DEFINE_DIMEMSION);
+	}
+	
+	@Test
+	def void testDefineArrayIntegers() {
+		val value = '''
+			module Moo
+			define a0[3] := {1,2,3};
+			define a1[4][2] := {{5,4}, {0,6}, {1,8}, {8,4}};
+			sys Int(0..8)[4] arr1;
+			gar G arr1[0] = a0[2];
+			gar G arr1[0] = a1[1][0];
+		'''.parse
+		value.assertNoErrors;
+	}
+	
+	@Test
+	def void testDefineArrayBooleans() {
+		val value = '''
+			module Moo
+			define a0[3] := {true,arr1[0]=arr1[1],arr1[1]=4}; 
+			sys Int(0..8)[4] arr1;
+			gar G forall i in Int(0..2). a0[i];
+		'''.parse
+		value.assertNoErrors;
+	}
+	
+	@Test
+	def void testDefineArrayIndexes1() {
+		val value = '''
+			module Moo
+			define a1[4][2] := {{5,4}, {0,6}, {1,8}, {8,4}};
+			sys Int(0..8)[4] arr1;
+			gar G forall i in Int(0..3) . arr1[i] = a1[i][0];
+		'''.parse
+		value.assertNoErrors;
+	}
+	
+	@Test
+	def void testDefineArrayIndexes2() {
+		val value = '''
+			module Moo
+			define N := 5;
+			define a1[(N-1)] := {5,6,7,8};
+			sys Int(5..8) i;
+			gar G i = a1[i-5];
+		'''.parse
+		value.assertNoErrors;
+	}
+	
+	@Test
+	def void testDefineArrayDefineDimensions() {
+		val value = '''
+			module Moo
+			define N := 3;
+			define a1[N][N] := {{1,2,3},{4,5,6},{7,8,9}};
+			sys Int(0..8) ind;
+			gar G forall i in Int(0..2) . forall j in Int(0..2) . ind = a1[i][j];
+		'''.parse
+		value.assertNoErrors;
+	}
+	
+	@Test
+	def void testRegexpDefineInsideToRepetitionRange() {
+		val value = '''
+			module Moo
+			sys Int(0..7) x;
+			define myInt := 5; 
+			regexp myRegexp := [x>3]{0,myInt}; 
+		'''.parse
+		value.assertNoErrors;
+	}
+	
+	@Test
+	def void testRegexpDefineInsideFromRepetitionRange() {
+		val value = '''
+			module Moo
+			sys Int(0..7) x;
+			define myInt := 2; 
+			regexp myRegexp := [x>3]{myInt, 3}; 
+		'''.parse
+		value.assertNoErrors;
+	}
+	
+	@Test
+	def void testRegexpDefineInsideFromAndToRepetitionRange() {
+		val value = '''
+			module Moo
+			sys Int(0..7) x;
+			define fromInt := 2;
+			define toInt := 5; 
+			regexp myRegexp := [x>3]{fromInt, toInt}; 
+		'''.parse
+		value.assertNoErrors;
+	}
+	
+	@Test
+	def void testRegexpDefineInsideRepetitionRangeBoolean() {
+		val value = '''
+			module Moo
+			sys Int(0..7) x;
+			define myInt := true; 
+			regexp myRegexp := [x>3]{myInt, 3}; 
+		'''.parse
+		value.assertError(SpectraPackage::eINSTANCE.unaryRegExp, null,
+			IssueMessages.REGEXP_INVALID_RANGE_QUANTIFIER_NOT_A_NUMBER);
+	}
+	
+	@Test
+	def void testRegexpDefineInsideRepetitionRangeNotAVar() {
+		val value = '''
+			module Moo
+			sys Int(0..7) x;
+			define myInt := x + 3; 
+			regexp myRegexp := [x>3]{myInt, 3}; 
+		'''.parse
+		value.assertError(SpectraPackage::eINSTANCE.unaryRegExp, null,
+			IssueMessages.REGEXP_INVALID_RANGE_QUANTIFIER_NOT_A_NUMBER);
+	}
+} 

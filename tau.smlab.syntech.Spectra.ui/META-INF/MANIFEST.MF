@@ -30,4 +30,4 @@ Export-Package: tau.smlab.syntech.Spectra.ui.internal,
  tau.smlab.syntech.ui.quickfix,
  tau.smlab.syntech.ui.contentassist
 Bundle-Activator: tau.smlab.syntech.Spectra.ui.internal.SpectraActivator
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Automatic-Module-Name: tau.smlab.syntech.Spectra.ui

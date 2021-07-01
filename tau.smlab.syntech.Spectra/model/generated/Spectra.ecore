@@ -49,6 +49,16 @@
   <eClassifiers xsi:type="ecore:EClass" name="DefineDecl" eSuperTypes="#//Referrable">
     <eStructuralFeatures xsi:type="ecore:EReference" name="simpleExpr" eType="#//TemporalExpression"
         containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="dimensions" upperBound="-1"
+        eType="#//SizeDefineDecl" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="innerArray" eType="#//DefineArray"
+        containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="DefineArray">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="simpleExprs" upperBound="-1"
+        eType="#//TemporalExpression" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="innerArrays" upperBound="-1"
+        eType="#//DefineArray" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="DefineRegExp" eSuperTypes="#//Decl">
     <eStructuralFeatures xsi:type="ecore:EReference" name="defineRegsList" upperBound="-1"
@@ -191,10 +201,6 @@
         containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="BooleanTerm">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="pointer" eType="#//VarDecl"/>
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="not" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="values" upperBound="-1"
-        eType="#//ValueInRange" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="relExpr" eType="#//TemporalExpression"
         containment="true"/>
   </eClassifiers>
@@ -215,6 +221,14 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="name" eType="#//DefineDecl"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="arithExp" eType="#//TemporalExpression"
         containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="TemporalInExpr" eSuperTypes="#//TemporalExpression">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="left" eType="#//TemporalExpression"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="not" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="operator" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="values" upperBound="-1"
+        eType="#//ValueInRange" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="TemporalImpExpr" eSuperTypes="#//TemporalExpression">
     <eStructuralFeatures xsi:type="ecore:EReference" name="left" eType="#//TemporalExpression"
@@ -312,7 +326,9 @@
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="atLeast" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="haveRange" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="from" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="fromDefine" eType="#//DefineDecl"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="to" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="toDefine" eType="#//DefineDecl"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="CompRegExp" eSuperTypes="#//RegExp">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="comp" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>

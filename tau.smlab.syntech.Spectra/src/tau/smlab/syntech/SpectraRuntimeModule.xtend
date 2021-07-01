@@ -67,7 +67,7 @@ class SpectraRuntimeModule extends AbstractSpectraRuntimeModule {
 //	override bindIGlobalScopeProvider() { ImportUriGlobalScopeProvider }
 //
 //	override configureIScopeProviderDelegate(Binder binder) {
-//		binder.bind(IScopeProvider).annotatedWith(Names.named(Abst�?​ractDeclarativeScope�?​Provider.NAMED_DELEG�?​ATE)).
+//		binder.bind(IScopeProvider).annotatedWith(Names.named(Abst‌​ractDeclarativeScope‌​Provider.NAMED_DELEG‌​ATE)).
 //			to(SimpleLocalScopeProvider);
 //	}
 //

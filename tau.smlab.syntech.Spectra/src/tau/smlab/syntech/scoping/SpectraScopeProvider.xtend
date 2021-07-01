@@ -63,6 +63,7 @@ import tau.smlab.syntech.spectra.TypeDef
 import tau.smlab.syntech.spectra.Var
 import tau.smlab.syntech.spectra.VarDecl
 import tau.smlab.syntech.spectra.DefineDecl
+import tau.smlab.syntech.spectra.DefineArray
 
 /**
  * This class contains custom scoping description.
@@ -406,8 +407,13 @@ class SpectraScopeProvider extends AbstractSpectraScopeProvider {
 				EObjectsInScope.addAll(PattList)
 				
 				for (DefineDecl decl : define.^defineList){
-					var tmpExpr = decl.^simpleExpr as TemporalExpression
-					addDomainVars(EObjectsInScope, tmpExpr)
+					if (decl.^simpleExpr !== null) {
+						var tmpExpr = decl.^simpleExpr as TemporalExpression
+						addDomainVars(EObjectsInScope, tmpExpr)
+					} else {
+						addDomainVarsForDefine(EObjectsInScope, decl.^innerArray)
+					}
+
 				}
 
 				for (Pattern p : PattList) {
@@ -609,6 +615,15 @@ class SpectraScopeProvider extends AbstractSpectraScopeProvider {
 				return Scopes.scopeFor(EObjectsInScope)
 			}
 		})
+	}
+	
+	def void addDomainVarsForDefine(List<EObject> EObjectsInScope, DefineArray defArray) {
+		for (DefineArray innerArray : defArray.^innerArrays) {
+			addDomainVarsForDefine(EObjectsInScope, innerArray);
+		}
+		for (TemporalExpression exp : defArray.^simpleExprs) {
+			addDomainVars(EObjectsInScope, exp);
+		}
 	}
 
 	def void addDomainVars(List<EObject> EObjectsInScope, TemporalExpression tempExp) {

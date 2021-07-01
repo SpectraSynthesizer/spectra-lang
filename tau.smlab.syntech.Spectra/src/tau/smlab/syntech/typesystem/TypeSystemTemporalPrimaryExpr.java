@@ -52,7 +52,6 @@ import tau.smlab.syntech.spectra.TypedParam;
 import tau.smlab.syntech.spectra.TypedParamList;
 import tau.smlab.syntech.spectra.VarDecl;
 import tau.smlab.syntech.spectra.VarType;
-import tau.smlab.syntech.typesystem.TypeSystemUtils.NotArithmeticExpressionException;
 
 public class TypeSystemTemporalPrimaryExpr {
 
@@ -122,7 +121,6 @@ public class TypeSystemTemporalPrimaryExpr {
 				&& temporalPrimaryExpr.getIndex().size() > 0) {
 			// a pointer + [] found
 			if (temporalPrimaryExpr.getPointer() instanceof TypeConstant
-					|| temporalPrimaryExpr.getPointer() instanceof DefineDecl
 					|| temporalPrimaryExpr.getPointer() instanceof PatternParam
 					|| temporalPrimaryExpr.getPointer() instanceof Monitor
 					|| temporalPrimaryExpr.getPointer() instanceof Counter) {
@@ -142,6 +140,12 @@ public class TypeSystemTemporalPrimaryExpr {
 					return new TypeCheckError(SpectraPackage.Literals.TEMPORAL_PRIMARY_EXPR__POINTER,
 							IssueMessages.NOT_AN_ARRAY);
 				}
+			} else if (temporalPrimaryExpr.getPointer() instanceof DefineDecl) {
+				DefineDecl defineDecl = (DefineDecl) temporalPrimaryExpr.getPointer();
+				if (defineDecl.getInnerArray() == null) {
+					return new TypeCheckError(SpectraPackage.Literals.TEMPORAL_PRIMARY_EXPR__POINTER,
+							IssueMessages.NOT_AN_ARRAY);
+				}
 			}
 		}
 		
@@ -158,7 +162,7 @@ public class TypeSystemTemporalPrimaryExpr {
 						IssueMessages.FUNCTION_CANT_APPLY_ON_BOOLEAN_ARRAY);
 			} else if (!TypeSystemUtils.isVarTypeBoolean(varType) && !TypeSystemUtils.NUMERIC_ARRAY_FUNCTIONS.contains(temporalPrimaryExpr.getOperator())) {
 				return new TypeCheckError(SpectraPackage.Literals.TEMPORAL_PRIMARY_EXPR__OPERATOR,
-						IssueMessages.FUNCTION_CANT_APPLY_ON_TYPE_ARRAY);
+						IssueMessages.FUNCTION_CAN_APPLY_ONlY_ON_BOOLEAN_ARRAY);
 			}
 			
 		} 
@@ -217,20 +221,21 @@ public class TypeSystemTemporalPrimaryExpr {
 //					IssueMessages.INVALID_INDEX_EXP);
 //		}
 		VarType varType = null;
+		List<Integer> varDimensions = null;
 		if (temporalPrimaryExpr.getPointer() instanceof VarDecl) {
 			VarDecl varDecl = (VarDecl) temporalPrimaryExpr.getPointer();
 			varType = TypeSystemUtils.getVarType(varDecl.getType());
+			varDimensions = TypeSystemUtils.sizeDefineToInt(varType.getDimensions());
 		} else if (temporalPrimaryExpr.getPointer() instanceof TypedParam) {
 			TypedParam typedParam = (TypedParam) temporalPrimaryExpr.getPointer();
 			varType = TypeSystemUtils.getVarType(typedParam.getType());
+			varDimensions = TypeSystemUtils.sizeDefineToInt(varType.getDimensions());
+		} else if (temporalPrimaryExpr.getPointer() instanceof DefineDecl) {
+			DefineDecl defineDecl = (DefineDecl) temporalPrimaryExpr.getPointer();
+			varDimensions = TypeSystemUtils.sizeDefineToInt(defineDecl.getDimensions());
 		}
 
-		// FIXME there are cases where varType is null
-		if (varType == null) {
-			return null;
-		}
-
-		List<Integer> varDimensions = TypeSystemUtils.sizeDefineToInt(varType.getDimensions());
+		
 		// declared var is an array
 		if (varDimensions != null && varDimensions.size() > 0 && specifiedLocations != null
 				&& specifiedLocations.size() > 0) {
@@ -238,7 +243,16 @@ public class TypeSystemTemporalPrimaryExpr {
 				return new TypeCheckError(SpectraPackage.Literals.TEMPORAL_PRIMARY_EXPR__INDEX,
 						IssueMessages.DIMENSIONS_DONT_MATCH);
 			}
-//			for(int i = 0; i < specifiedLocations.size(); i++) {
+			for(int i = 0; i < specifiedLocations.size(); i++) {
+				if (specifiedLocations.get(i) instanceof Constant) {
+					Constant c = (Constant) specifiedLocations.get(i);
+					
+					// Basic bounds check if index is constant
+					if(c.getIntegerValue() < 0 || c.getIntegerValue() >= varDimensions.get(i)) {
+						return new TypeCheckError(SpectraPackage.Literals.TEMPORAL_PRIMARY_EXPR__INDEX,
+								IssueMessages.INDEX_OUT_OF_BOUNDS);
+					}
+				}
 //				if(specifiedLocations.get(i).get(0) < 0 || specifiedLocations.get(i).get(0) >= varDimensions.get(i)) {
 //					return new TypeCheckError(SpectraPackage.Literals.TEMPORAL_PRIMARY_EXPR__INDEX,
 //							IssueMessages.INDEX_OUT_OF_BOUNDS);
@@ -250,7 +264,7 @@ public class TypeSystemTemporalPrimaryExpr {
 //								IssueMessages.INDEX_OUT_OF_BOUNDS);
 //					}
 //				}
-//			}
+			}
 		}
 		return null;
 	}

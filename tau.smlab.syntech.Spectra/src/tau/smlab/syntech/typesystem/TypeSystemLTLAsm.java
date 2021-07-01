@@ -73,17 +73,12 @@ public class TypeSystemLTLAsm {
 							IssueMessages.ASM_SAFETY_CAN_ONLY_HAVE_PRIMED_ENV);
 				}
 			}
-		} else if (asm.getStateInv() != null) {
-			if (!primedVarDeclsList.isEmpty()) {
-				return new TypeCheckError(SpectraPackage.Literals.LTL_ASM__TEMPORAL_EXPR,
-						IssueMessages.STATEINV_NO_PRIMES);
-			}
 		} else if(asm.getJustice() != null) {
 			if (!primedVarDeclsList.isEmpty()) {
 				return new TypeCheckError(SpectraPackage.Literals.LTL_ASM__TEMPORAL_EXPR,
 						IssueMessages.ASM_JUSTICE_CANT_HAVE_PRIMED_VARS);
 			}
-		} else {
+		} else if (asm.getStateInv() == null){
 			// ini
 			if (primedVarDeclsList != null && primedVarDeclsList.size() > 0) {
 				return new TypeCheckError(SpectraPackage.Literals.LTL_ASM__TEMPORAL_EXPR,

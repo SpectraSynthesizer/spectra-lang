@@ -46,6 +46,7 @@ import tau.smlab.syntech.spectra.TemporalAndExpr;
 import tau.smlab.syntech.spectra.TemporalBinaryExpr;
 import tau.smlab.syntech.spectra.TemporalIffExpr;
 import tau.smlab.syntech.spectra.TemporalImpExpr;
+import tau.smlab.syntech.spectra.TemporalInExpr;
 import tau.smlab.syntech.spectra.TemporalMultiplicativeExpr;
 import tau.smlab.syntech.spectra.TemporalOrExpr;
 import tau.smlab.syntech.spectra.TemporalPrimaryExpr;
@@ -64,6 +65,10 @@ public class TypeSystemManager {
     if (eobject instanceof TemporalRelationalExpr)
     {
       return TypeSystemTemporalRelationalExpr.typeCheck((TemporalRelationalExpr)eobject);
+    }
+    else if (eobject instanceof TemporalInExpr)
+    {
+      return TypeSystemTemporalInExpr.typeCheck((TemporalInExpr)eobject);
     }
     else if (eobject instanceof TemporalPrimaryExpr)
     {
