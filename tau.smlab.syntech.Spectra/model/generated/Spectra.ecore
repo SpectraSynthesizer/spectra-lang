@@ -176,6 +176,12 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="regExp" eType="#//RegExp"
         containment="true"/>
   </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="RegexpTest" eSuperTypes="#//Decl">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="regExpPointer" eType="#//DefineRegExpDecl"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="regExp" eType="#//RegExp"
+        containment="true"/>
+  </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="TemporalExpression"/>
   <eClassifiers xsi:type="ecore:EClass" name="PredicateOrPatternReferrable"/>
   <eClassifiers xsi:type="ecore:EClass" name="Subrange">

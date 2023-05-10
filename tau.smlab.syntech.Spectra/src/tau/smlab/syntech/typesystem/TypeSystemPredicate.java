@@ -33,7 +33,6 @@ import java.util.List;
 
 import org.eclipse.xtext.EcoreUtil2;
 
-import tau.smlab.syntech.spectra.Pattern;
 import tau.smlab.syntech.spectra.Predicate;
 import tau.smlab.syntech.spectra.SpectraPackage;
 import tau.smlab.syntech.spectra.TemporalPrimaryExpr;
