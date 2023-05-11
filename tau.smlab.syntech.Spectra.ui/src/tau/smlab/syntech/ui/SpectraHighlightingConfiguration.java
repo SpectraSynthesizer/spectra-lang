@@ -41,6 +41,7 @@ public class SpectraHighlightingConfiguration  extends DefaultHighlightingConfig
 	public static final String GUARANTEE_ID = "guarantee";
 	public static final String WEIGHT_ID = "weight";
 	public static final String REGEXP_ID = "regexp";
+	public static final String REGEXPTEST_ID = "regtest";
 	
 	@Override
 	public void configure(IHighlightingConfigurationAcceptor acceptor) {
@@ -50,6 +51,7 @@ public class SpectraHighlightingConfiguration  extends DefaultHighlightingConfig
 		acceptor.acceptDefaultHighlighting(GUARANTEE_ID, "Guarantee", guaranteeTextStyle());
 		acceptor.acceptDefaultHighlighting(WEIGHT_ID, "Weight", weightTextStyle());
 		acceptor.acceptDefaultHighlighting(REGEXP_ID, "RegExp", defineRegExpTextStyle());
+		acceptor.acceptDefaultHighlighting(REGEXPTEST_ID, "RegexpTest", defineRegExpTestTextStyle());
 	}
 
 	private TextStyle weightTextStyle() {
@@ -68,8 +70,8 @@ public class SpectraHighlightingConfiguration  extends DefaultHighlightingConfig
 
 	private TextStyle typeConstantTextStyle() {
 		TextStyle textStyle = defaultTextStyle().copy();
-		textStyle.setColor(new RGB(76, 0, 153));
-		textStyle.setStyle(SWT.ITALIC);
+		textStyle.setColor(new RGB(104, 151, 187));
+		textStyle.setStyle(SWT.ITALIC | SWT.BOLD);
 		return textStyle;
 	}
 
@@ -81,6 +83,13 @@ public class SpectraHighlightingConfiguration  extends DefaultHighlightingConfig
 	}
 	
 	private TextStyle defineRegExpTextStyle() {
+		TextStyle textStyle = defaultTextStyle().copy();
+		textStyle.setColor(new RGB(255, 20, 147));
+		textStyle.setStyle(SWT.BOLD);
+		return textStyle;
+	}
+	
+	private TextStyle defineRegExpTestTextStyle() {
 		TextStyle textStyle = defaultTextStyle().copy();
 		textStyle.setColor(new RGB(255, 20, 147));
 		textStyle.setStyle(SWT.BOLD);

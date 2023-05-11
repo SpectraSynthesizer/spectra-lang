@@ -51,6 +51,8 @@ import tau.smlab.syntech.spectra.Counter
 import tau.smlab.syntech.spectra.QuantifierExpr
 import tau.smlab.syntech.spectra.EXGar
 import tau.smlab.syntech.spectra.DefineRegExp
+import tau.smlab.syntech.spectra.RegexpTest
+import tau.smlab.syntech.spectra.TemporalPrimaryExpr
 
 /**
  * This class contains custom validation rules. 
@@ -84,18 +86,19 @@ class SpectraValidator extends AbstractSpectraValidator {
 				seenNames.add(e.name)
 			}
 		}
-		
+
 		for (defineRegExp : m.elements.filter(typeof(DefineRegExp))) {
-			for(regExpDecl : defineRegExp.defineRegsList) {
-				if(regExpDecl.name !== null) {
+			for (regExpDecl : defineRegExp.defineRegsList) {
+				if (regExpDecl.name !== null) {
 					if (seenNames.contains(regExpDecl.name)) {
-						error("Regular expressions' names have to be unique", regExpDecl, SpectraPackage.Literals.DEFINE_REG_EXP_DECL.EIDAttribute);
+						error("Regular expressions' names have to be unique", regExpDecl,
+							SpectraPackage.Literals.DEFINE_REG_EXP_DECL.EIDAttribute);
 					}
 					seenNames.add(regExpDecl.name);
 				}
 			}
 		}
-	
+
 		for (define : m.elements.filter(typeof(Define))) {
 			for (defineDecl : define.defineList) {
 				if (defineDecl.name !== null) {
@@ -116,15 +119,23 @@ class SpectraValidator extends AbstractSpectraValidator {
 				seenNames.add(e.name)
 			}
 		}
-		
-		    for (e : m.elements.filter(typeof(EXGar))) {
-      if (e.name !== null) {
-        if (seenNames.contains(e.name)) {
-          error("Existential guarantee names have to be unique", e, SpectraPackage.Literals.EX_GAR__NAME)
-        }
-        seenNames.add(e.name)
-      }
-    }
+		for (e : m.elements.filter(typeof(EXGar))) {
+			if (e.name !== null) {
+				if (seenNames.contains(e.name)) {
+					error("Existential guarantee names have to be unique", e, SpectraPackage.Literals.EX_GAR__NAME)
+				}
+				seenNames.add(e.name)
+			}
+		}
+
+		for (e : m.elements.filter(typeof(RegexpTest))) {
+			if (e.name !== null) {
+				if (seenNames.contains(e.name)) {
+					error("Test names have to be unique", e, SpectraPackage.Literals.REGEXP_TEST__NAME)
+				}
+				seenNames.add(e.name)
+			}
+		}
 
 		for (e : m.elements.filter(typeof(LTLGar))) {
 			if (e.name !== null) {
@@ -134,15 +145,16 @@ class SpectraValidator extends AbstractSpectraValidator {
 				seenNames.add(e.name)
 			}
 			var tmpExpr = e.getTemporalExpr();
-            //checks if every domain var in the quantifier expression has a unique name
-            while(tmpExpr instanceof QuantifierExpr) {
-                if(domainVarsNames.contains(tmpExpr.getDomainVar().name)) {
-                    error("Domain variables names have to be unique in scope", e, SpectraPackage.Literals.LTL_GAR__TEMPORAL_EXPR)
-                }
-                domainVarsNames.add(tmpExpr.getDomainVar().name);
-                tmpExpr=tmpExpr.getTemporalExpr();
-            }
-            domainVarsNames.clear();
+			// checks if every domain var in the quantifier expression has a unique name
+			while (tmpExpr instanceof QuantifierExpr) {
+				if (domainVarsNames.contains(tmpExpr.getDomainVar().name)) {
+					error("Domain variables names have to be unique in scope", e,
+						SpectraPackage.Literals.LTL_GAR__TEMPORAL_EXPR)
+				}
+				domainVarsNames.add(tmpExpr.getDomainVar().name);
+				tmpExpr = tmpExpr.getTemporalExpr();
+			}
+			domainVarsNames.clear();
 		}
 
 		for (e : m.elements.filter(typeof(LTLAsm))) {
@@ -153,15 +165,15 @@ class SpectraValidator extends AbstractSpectraValidator {
 				seenNames.add(e.name)
 			}
 			var tmpExpr = e.getTemporalExpr();
-            //checks if every domain var in the quantifier expression has a unique name
-            while(tmpExpr instanceof QuantifierExpr) {
-                if(domainVarsNames.contains(tmpExpr.getDomainVar().name)) {
-                    error("DomainVar Name must be unique in scope", e, SpectraPackage.Literals.LTL_ASM__TEMPORAL_EXPR)
-                }
-                domainVarsNames.add(tmpExpr.getDomainVar().name);
-                tmpExpr=tmpExpr.getTemporalExpr();
-            }
-            domainVarsNames.clear();
+			// checks if every domain var in the quantifier expression has a unique name
+			while (tmpExpr instanceof QuantifierExpr) {
+				if (domainVarsNames.contains(tmpExpr.getDomainVar().name)) {
+					error("DomainVar Name must be unique in scope", e, SpectraPackage.Literals.LTL_ASM__TEMPORAL_EXPR)
+				}
+				domainVarsNames.add(tmpExpr.getDomainVar().name);
+				tmpExpr = tmpExpr.getTemporalExpr();
+			}
+			domainVarsNames.clear();
 		}
 
 		for (monitor : m.elements.filter(typeof(Monitor))) {
@@ -194,27 +206,55 @@ class SpectraValidator extends AbstractSpectraValidator {
 		}
 	}
 
-  @Check
-  def checkCounterPartsUnique(Counter c) {
-    if (c.initial !== null && c.initial.size > 1) {
-      error("Cannot define multiple initial constraints in a counter", c, SpectraPackage.Literals.COUNTER__INITIAL)
-    }
-    if (c.decPred !== null && c.decPred.size > 1) {
-      error("Cannot define multiple decrement constraints in a counter", c, SpectraPackage.Literals.COUNTER__DEC_PRED)
-    }
-    if (c.incPred !== null && c.incPred.size > 1) {
-      error("Cannot define multiple increment constraints in a counter", c, SpectraPackage.Literals.COUNTER__INC_PRED)
-    }
-    if (c.overflowMethod !== null && c.overflowMethod.size > 1) {
-      error("Cannot define multiple overflow methods for a counter", c, SpectraPackage.Literals.COUNTER__OVERFLOW_METHOD)
-    }
-    
-  }
-  
+	@Check
+	def checkCounterPartsUnique(Counter c) {
+		if (c.initial !== null && c.initial.size > 1) {
+			error("Cannot define multiple initial constraints in a counter", c,
+				SpectraPackage.Literals.COUNTER__INITIAL)
+		}
+		if (c.decPred !== null && c.decPred.size > 1) {
+			error("Cannot define multiple decrement constraints in a counter", c,
+				SpectraPackage.Literals.COUNTER__DEC_PRED)
+		}
+		if (c.incPred !== null && c.incPred.size > 1) {
+			error("Cannot define multiple increment constraints in a counter", c,
+				SpectraPackage.Literals.COUNTER__INC_PRED)
+		}
+		if (c.overflowMethod !== null && c.overflowMethod.size > 1) {
+			error("Cannot define multiple overflow methods for a counter", c,
+				SpectraPackage.Literals.COUNTER__OVERFLOW_METHOD)
+		}
+
+	}
+
 	@Check
 	def checkModuleNameStartsWithCapital(Model m) {
 		if (!Character.isUpperCase(m.name.charAt(0))) {
 			warning('Module name should start with a capital', SpectraPackage.Literals.MODEL__NAME, INVALID_NAME)
+		}
+	}
+
+	@Check
+	def checkPatternInGarIni(LTLGar c) {
+		if (c.safety !== null || c.justice !== null || c.stateInv !== null || c.trig !== null) {
+			if (c.temporalExpr instanceof TemporalPrimaryExpr) {
+				val temporalPrimaryExpr = c.temporalExpr as TemporalPrimaryExpr;
+				if (temporalPrimaryExpr.getPredPatt() instanceof Pattern)
+					error('A pattern instance must not have any temporal operator.', c,
+						SpectraPackage.Literals.LTL_GAR__TEMPORAL_EXPR)
+			}
+		}
+	}
+
+	@Check
+	def checkPatternInAsmIni(LTLAsm c) {
+		if (c.safety !== null || c.justice !== null || c.stateInv !== null || c.trig !== null) {
+			if (c.temporalExpr instanceof TemporalPrimaryExpr) {
+				val temporalPrimaryExpr = c.temporalExpr as TemporalPrimaryExpr;
+				if (temporalPrimaryExpr.getPredPatt() instanceof Pattern)
+					error('A pattern instance must not have any temporal operator.', c,
+						SpectraPackage.Literals.LTL_GAR__TEMPORAL_EXPR)
+			}
 		}
 	}
 
@@ -237,5 +277,4 @@ class SpectraValidator extends AbstractSpectraValidator {
 			}
 		}
 	}
-
 }

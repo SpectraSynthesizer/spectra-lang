@@ -66,7 +66,7 @@ public class TypeSystemLTLAsm {
 		List<VarDecl> nonPrimedVarDeclsList = TypeSystemUtils.getNonPrimedVarDecls(temporalPrimaryExprsList);
 		List<VarDecl> primedVarDeclsList = TypeSystemUtils.getPrimedVarDecls(temporalPrimaryExprsList);
 
-		if (asm.getSafety() != null) {
+		if (asm.getSafety() != null || asm.getStateInv() != null) {
 			for (VarDecl primedVarDecl : primedVarDeclsList) {
 				if (TypeSystemUtils.isSysVarDecl(primedVarDecl) || TypeSystemUtils.isAuxVarDecl(primedVarDecl)) {
 					return new TypeCheckError(SpectraPackage.Literals.LTL_ASM__TEMPORAL_EXPR,

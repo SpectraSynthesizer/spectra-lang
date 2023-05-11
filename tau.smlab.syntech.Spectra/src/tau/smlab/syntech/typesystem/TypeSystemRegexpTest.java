@@ -26,42 +26,14 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 */
 
-package tau.smlab.syntech.ui;
+package tau.smlab.syntech.typesystem;
 
-import org.eclipse.xtext.ide.editor.syntaxcoloring.DefaultAntlrTokenToAttributeIdMapper;
+import tau.smlab.syntech.spectra.RegexpTest;
 
-public class SpectraAntlrTokenToAttributeIdMapper extends DefaultAntlrTokenToAttributeIdMapper {
-	@Override
-	protected String calculateId(String tokenName, int tokenType) {
-//		if ("RULE_HASH_COMMENT".equals(tokenName)) {
-//			return HighlightingStyles.COMMENT_ID;
-//		}
-//		if ("RULE_ID".equals(tokenName)) {
-//
-//			return HighlightingStyles.COMMENT_ID;
-//		}
-		if ("'assumption'".equals(tokenName) || ("'asm'".equals(tokenName)) || ("'input'".equals(tokenName)) || ("'in'".equals(tokenName)) || ("'envvar'".equals(tokenName)) || ("'env'".equals(tokenName)))
-		{
-			return SpectraHighlightingConfiguration.ASSUMPTION_ID;
-		}
-		if ("'guarantee'".equals(tokenName) || ("'gar'".equals(tokenName)) || ("'output'".equals(tokenName)) || ("'out'".equals(tokenName)) || ("'sysvar'".equals(tokenName)) || ("'sys'".equals(tokenName)))
-		{
-			return SpectraHighlightingConfiguration.GUARANTEE_ID;
-		}
-		if ("'weight'".equals(tokenName))
-		{
-			return SpectraHighlightingConfiguration.WEIGHT_ID;
-		}
-		if ("'regexp'".equals(tokenName))
-		{
-			return SpectraHighlightingConfiguration.REGEXP_ID;
-		}
-		if ("'regtest'".equals(tokenName))
-		{
-			return SpectraHighlightingConfiguration.REGEXPTEST_ID;
-		}
-		return super.calculateId(tokenName, tokenType);
-		
-		
+
+public class TypeSystemRegexpTest {
+
+	public static TypeCheckIssue typeCheck(RegexpTest regpexpTest) {
+		return null;
 	}
 }

@@ -29,10 +29,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package tau.smlab.syntech.typesystem;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-
 import org.eclipse.xtext.EcoreUtil2;
 
 import tau.smlab.syntech.spectra.BooleanTerm;
@@ -41,9 +38,7 @@ import tau.smlab.syntech.spectra.TemporalBinaryExpr;
 import tau.smlab.syntech.spectra.TemporalExpression;
 import tau.smlab.syntech.spectra.TemporalPrimaryExpr;
 import tau.smlab.syntech.spectra.TemporalUnaryExpr;
-import tau.smlab.syntech.spectra.ValueInRange;
 import tau.smlab.syntech.spectra.VarDecl;
-import tau.smlab.syntech.spectra.VarType;
 
 /**
  * 
