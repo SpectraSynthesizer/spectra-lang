@@ -210,6 +210,7 @@ TemporalPrimaryExpr returns TemporalExpression:
 	| '(' QuantifierExpr ')'
 	| {TemporalPrimaryExpr}
 	 (predPatt=[PredicateOrPatternReferrable] ('(' predPattParams+=TemporalInExpr (',' predPattParams+=TemporalInExpr)* ')' | '()')
+	 | 'ite' '(' ifPart=TemporalInExpr ',' thenPart=TemporalInExpr ',' elsePart=TemporalInExpr ')'
 	 | operator=('-'|'!') tpe=TemporalPrimaryExpr
 	 | pointer=[Referrable]('[' index+=TemporalInExpr ']')* 
 	 | operator='next' '(' temporalExpression=TemporalInExpr ')'

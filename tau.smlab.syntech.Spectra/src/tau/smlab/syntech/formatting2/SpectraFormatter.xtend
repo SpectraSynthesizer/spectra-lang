@@ -243,11 +243,11 @@ class SpectraFormatter extends AbstractFormatter2 {
 		// temporalPrimaryExpr.tpe.format;
 		// temporalPrimaryExpr.regionFor.keyword(grammarAccess.temporalPrimaryExprAccess.getOperatorNextKeyword_2_1_3_0_0().value).prepend[setNewLines(1, 1, 1)]
 		temporalPrimaryExpr.regionFor.keyword(
-			grammarAccess.temporalPrimaryExprAccess.getLeftParenthesisKeyword_2_1_3_1().value).prepend[oneSpace].append [
+			grammarAccess.temporalPrimaryExprAccess.getLeftParenthesisKeyword_2_1_4_1().value).prepend[oneSpace].append [
 			noSpace
 		] // "("
 		temporalPrimaryExpr.regionFor.keyword(
-			grammarAccess.temporalPrimaryExprAccess.getRightParenthesisKeyword_2_1_3_3().value).prepend[noSpace].append [
+			grammarAccess.temporalPrimaryExprAccess.getRightParenthesisKeyword_2_1_4_3().value).prepend[noSpace].append [
 			oneSpace
 		] // ")"
 		temporalPrimaryExpr.regionFor.keyword(

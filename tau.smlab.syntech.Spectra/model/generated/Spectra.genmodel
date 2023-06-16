@@ -228,6 +228,9 @@
     <genClasses ecoreClass="Spectra.ecore#//TemporalPrimaryExpr">
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference Spectra.ecore#//TemporalPrimaryExpr/predPatt"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference Spectra.ecore#//TemporalPrimaryExpr/predPattParams"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference Spectra.ecore#//TemporalPrimaryExpr/ifPart"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference Spectra.ecore#//TemporalPrimaryExpr/thenPart"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference Spectra.ecore#//TemporalPrimaryExpr/elsePart"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Spectra.ecore#//TemporalPrimaryExpr/operator"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference Spectra.ecore#//TemporalPrimaryExpr/tpe"/>
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference Spectra.ecore#//TemporalPrimaryExpr/pointer"/>

@@ -277,4 +277,40 @@ public void setRegexpPointer(DefineRegExpDecl value) {
 	
 }
 
+@Override
+public TemporalExpression getIfPart() {
+	// TODO Auto-generated method stub
+	return null;
+}
+
+@Override
+public void setIfPart(TemporalExpression value) {
+	// TODO Auto-generated method stub
+	
+}
+
+@Override
+public TemporalExpression getThenPart() {
+	// TODO Auto-generated method stub
+	return null;
+}
+
+@Override
+public void setThenPart(TemporalExpression value) {
+	// TODO Auto-generated method stub
+	
+}
+
+@Override
+public TemporalExpression getElsePart() {
+	// TODO Auto-generated method stub
+	return null;
+}
+
+@Override
+public void setElsePart(TemporalExpression value) {
+	// TODO Auto-generated method stub
+	
+}
+
 }
