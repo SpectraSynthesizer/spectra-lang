@@ -50,7 +50,9 @@ Decl:
 	| EXGar
 	| Counter
 	| DefineRegExp
-	| RegexpTest;
+	| RegexpTest
+	| Feature
+	| FeatureConstraint;
 
 
 WeightDef:
@@ -303,6 +305,40 @@ DomainVarDecl:
 //all the declaration that can determine size of array and range of int
 SizeDefineDecl:
     value=INT | name=[DefineDecl] | '(' arithExp=TemporalExpression ')';
+    
+
+LTLFormula:
+	LTLGar | LTLAsm
+;
+Feature:
+  {Feature} '@feature' name=ID '{' 
+  	( (formulas+=[LTLFormula]) (',' formulas+=[LTLFormula])*)
+   '}';
+
+FeatureConstraint:
+	'@featureconstraint' expr=FeatureImpExpr TOK_SEMI;
+	
+FeatureExpr:
+	FeatureImpExpr;
+	
+FeatureImpExpr returns FeatureExpr:
+	FeatureIffExpr ({FeatureImpExpr.left=current} operator=('->' | 'implies') implication=FeatureImpExpr)?;
+
+FeatureIffExpr returns FeatureExpr:
+	FeatureOrExpr ({FeatureIffExpr.elements+=current} operator=('<->' | 'iff') elements+=FeatureOrExpr)*;
+
+FeatureOrExpr returns FeatureExpr:
+	FeatureAndExpr	({FeatureOrExpr.elements+=current} operator+=('|' | 'or') elements+=FeatureAndExpr)*;
+
+FeatureAndExpr returns FeatureExpr:
+	FeatureUnaryExpr ({FeatureAndExpr.elements+=current} operator+=('&' | 'and') elements+=FeatureUnaryExpr)*;
+
+FeatureUnaryExpr returns FeatureExpr:
+	feature=[Feature]
+	| '(' FeatureImpExpr ')'
+	| {FeatureExpr}
+	| '!' expr=FeatureUnaryExpr;
+	
                           
 
 TOK_SEMI:
