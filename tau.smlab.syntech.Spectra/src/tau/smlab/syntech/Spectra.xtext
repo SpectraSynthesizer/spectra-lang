@@ -307,16 +307,14 @@ SizeDefineDecl:
     value=INT | name=[DefineDecl] | '(' arithExp=TemporalExpression ')';
     
 
-LTLFormula:
-	LTLGar | LTLAsm
-;
 Feature:
   {Feature} '@feature' name=ID '{' 
-  	( (formulas+=[LTLFormula]) (',' formulas+=[LTLFormula])*)
+  	( 'guarantees:' (gars+=[LTLGar]) (',' gars+=[LTLGar])*)
+  	( 'assumptions:' (asms+=[LTLAsm]) (',' asms+=[LTLAsm])*)
    '}';
 
 FeatureConstraint:
-	'@featureconstraint' expr=FeatureImpExpr TOK_SEMI;
+	'@featuremodel' expr=FeatureImpExpr TOK_SEMI;
 	
 FeatureExpr:
 	FeatureImpExpr;
