@@ -309,8 +309,8 @@ SizeDefineDecl:
 
 Feature:
   {Feature} '@feature' name=ID '{' 
-  	( 'guarantees:' (gars+=[LTLGar]) (',' gars+=[LTLGar])*)
-  	( 'assumptions:' (asms+=[LTLAsm]) (',' asms+=[LTLAsm])*)
+  	( 'guarantees:' (gars+=[LTLGar]) (',' gars+=[LTLGar])*)?
+  	( 'assumptions:' (asms+=[LTLAsm]) (',' asms+=[LTLAsm])*)?
    '}';
 
 FeatureConstraint:
