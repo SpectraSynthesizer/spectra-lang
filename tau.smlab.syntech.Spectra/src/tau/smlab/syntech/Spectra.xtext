@@ -48,11 +48,10 @@ Decl:
 	| LTLGar
 	| LTLAsm
 	| EXGar
+	| SwitchCond
 	| Counter
 	| DefineRegExp
-	| RegexpTest
-	| Feature
-	| FeatureConstraint;
+	| RegexpTest;
 
 
 WeightDef:
@@ -158,6 +157,9 @@ LTLAsm:
 	('assumption' | 'asm') (name=ID ('{'  params=TypedParamList '}')? ':')?
   ((('ini' | 'initially' | safety=('G' | 'trans') | stateInv=('always' | 'alw') | justice=('GF' | 'alwEv'| 'alwaysEventually'))? (temporalExpr=QuantifierExpr)) | (trig=Trigger)) TOK_SEMI;
 
+SwitchCond:
+	('switch') (name=ID ':')?
+	(temporalExpr=QuantifierExpr) TOK_SEMI;
 
 EXGar:	
   ('guarantee' | 'gar') (name=ID ':')?
@@ -305,38 +307,6 @@ DomainVarDecl:
 //all the declaration that can determine size of array and range of int
 SizeDefineDecl:
     value=INT | name=[DefineDecl] | '(' arithExp=TemporalExpression ')';
-    
-
-Feature:
-  {Feature} '@feature' name=ID '{' 
-  	( 'guarantees:' (gars+=[LTLGar]) (',' gars+=[LTLGar])*)?
-  	( 'assumptions:' (asms+=[LTLAsm]) (',' asms+=[LTLAsm])*)?
-   '}';
-
-FeatureConstraint:
-	'@featuremodel' expr=FeatureImpExpr TOK_SEMI;
-	
-FeatureExpr:
-	FeatureImpExpr;
-	
-FeatureImpExpr returns FeatureExpr:
-	FeatureIffExpr ({FeatureImpExpr.left=current} operator=('->' | 'implies') implication=FeatureImpExpr)?;
-
-FeatureIffExpr returns FeatureExpr:
-	FeatureOrExpr ({FeatureIffExpr.elements+=current} operator=('<->' | 'iff') elements+=FeatureOrExpr)*;
-
-FeatureOrExpr returns FeatureExpr:
-	FeatureAndExpr	({FeatureOrExpr.elements+=current} operator+=('|' | 'or') elements+=FeatureAndExpr)*;
-
-FeatureAndExpr returns FeatureExpr:
-	FeatureUnaryExpr ({FeatureAndExpr.elements+=current} operator+=('&' | 'and') elements+=FeatureUnaryExpr)*;
-
-FeatureUnaryExpr returns FeatureExpr:
-	feature=[Feature]
-	| '(' FeatureImpExpr ')'
-	| {FeatureExpr}
-	| '!' expr=FeatureUnaryExpr;
-	
                           
 
 TOK_SEMI:
