@@ -33,7 +33,6 @@ package tau.smlab.syntech.scoping
 
 import com.google.inject.Provider
 import java.util.List
-import javax.inject.Inject
 import org.eclipse.emf.common.util.EList
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EReference
@@ -64,6 +63,7 @@ import tau.smlab.syntech.spectra.Var
 import tau.smlab.syntech.spectra.VarDecl
 import tau.smlab.syntech.spectra.DefineDecl
 import tau.smlab.syntech.spectra.DefineArray
+import com.google.inject.Inject
 
 /**
  * This class contains custom scoping description.

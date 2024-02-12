@@ -32,7 +32,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package tau.smlab.syntech.ui.contentassist
 
 import java.util.List
-import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.Assignment
 import org.eclipse.xtext.CrossReference
@@ -62,6 +61,7 @@ import tau.smlab.syntech.spectra.Define
 import tau.smlab.syntech.spectra.DefineDecl
 import tau.smlab.syntech.spectra.Monitor
 import tau.smlab.syntech.spectra.Counter
+import com.google.inject.Inject
 
 /**
  * See https://www.eclipse.org/Xtext/documentation/304_ide_concepts.html#content-assist

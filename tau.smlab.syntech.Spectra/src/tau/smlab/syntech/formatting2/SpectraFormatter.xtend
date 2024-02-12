@@ -67,8 +67,8 @@ import tau.smlab.syntech.spectra.VarDecl
 import tau.smlab.syntech.spectra.VarOwner
 import tau.smlab.syntech.spectra.VarType
 import tau.smlab.syntech.spectra.WeightDef
-import javax.inject.Inject
 import tau.smlab.syntech.spectra.DefineArray
+import com.google.inject.Inject
 
 class SpectraFormatter extends AbstractFormatter2 {
 	// @Inject extension SpectraGrammarAccess
